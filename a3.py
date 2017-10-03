@@ -6,11 +6,12 @@ Semester 2, 2017
 # There are a number of jesting comments in the support code
 # They should not be taken seriously. Keep it fun folks :D
 # Students are welcome to add their own source code humour, provided it remains civil
-
+from tkinter import *
 import tkinter as tk
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import *
 import os
 import random
+
 
 try:
     from PIL import ImageTk, Image
@@ -72,14 +73,16 @@ class InfoPanel(tk.Frame):
         self._master = master
         info_frame = tk.Frame(master)
         info_frame.pack(side=tk.TOP, fill=tk.X)
-        
-        self._score_label = tk.Label(info_frame, text="score: 0")
+        self._score_label = tk.Label(info_frame, text="0", font=(None, 50))
         self._score_label.pack(side=tk.LEFT, fill=tk.X)
+
+        filename = r"images/companions/useless.gif"
+        self._img = PhotoImage(file=filename)
+        img_label = tk.Label(info_frame, text=None, image=self._img)
+        img_label.pack(side=tk.LEFT)
         
-        self._img = load_image_tk('images/anchor/anchor'
-
-
-
+    def set_score(self, score):
+        self._score_label.config(text="{}".format(score))
 
 
 
@@ -98,7 +101,8 @@ class DotsApp:
         self._playing = True
 
         self._image_manager = ImageManager('images/dots/', loader=load_image)
-
+        self._menu(master)
+        
         # Game
         counts = [10, 15, 25, 25]
         random.shuffle(counts)
@@ -272,7 +276,7 @@ class DotsApp:
     def _drop_complete(self):
         """Handles the end of a drop animation"""
         # Need to check whether the game is over
-        raise NotImplementedError()  # no mercy for stooges
+        #raise NotImplementedError()  # no mercy for stooges
 
     def _score(self, score):  # pylint: disable=no-self-use
         """Handles change in score
@@ -280,20 +284,30 @@ class DotsApp:
         Parameters:
             score (int): The new score
         """
+        self._info_panel.set_score(self._game.get_score())
 
-        # Normally, this should raise the following error:
-        # raise NotImplementedError()
-        # But so that the game can work prior to this method being implemented,
-        # we'll just print some information
-        # Sometimes I believe Python ignores all my comments :(
-        print("Score is now {}.".format(score))
-
-        # Note: # score can also be retrieved through self._game.get_score()
-
+    def _menu(self, master):
+        
+        menubar = Menu(master)
+        master.config(menu=menubar)
+        filemenu = Menu(menubar)
+        menubar.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label="New Game", command=self.reset)
+        filemenu.add_command(label="Exit", command=self.exit)
+        
+    def reset(self):
+        pass
+        
+    def exit(self):
+        if askyesno('Verify', 'Do you really wanna quit?'):
+            showwarning('Yes', "GG")
+            self._master.destroy()
+        else:
+            showinfo('No', 'Welcome back')
+        
 
 def main():
     """Sets-up the GUI for Dots & Co"""
-    # TODO: Write your GUI instantiation code here
     root = tk.Tk()
     app = DotsApp(root)
 
