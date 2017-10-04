@@ -120,9 +120,9 @@ class DotsApp(object):
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-##        self._objectives = ObjectiveManager(objectives)
+        self._objectives = ObjectiveManager(objectives)
 
-        self._info_panel.set_status(self._objectives.get_status())
+##        self._info_panel.set_status(self._objectives.get_status())
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
