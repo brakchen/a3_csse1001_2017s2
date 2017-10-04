@@ -73,20 +73,30 @@ class InfoPanel(tk.Frame):
         self._master = master
         info_frame = tk.Frame(master)
         info_frame.pack(side=tk.TOP, fill=tk.X)
+        
         self._score_label = tk.Label(info_frame, text="0", font=(None, 50))
-        self._score_label.pack(side=tk.LEFT, fill=tk.X)
+        self._score_label.pack(side=tk.LEFT)
+        
+        self.set_image(info_frame)
 
+        self._objective_label = tk.Label(info_frame, text="")
+        self._objective_label.pack(side=tk.RIGHT)
+        
+    def set_image(self, info_frame):
         filename = r"images/companions/useless.gif"
         self._img = PhotoImage(file=filename)
         img_label = tk.Label(info_frame, text=None, image=self._img)
-        img_label.pack(side=tk.LEFT)
+        img_label.pack(side=tk.TOP)
+        
+    def set_status(self, status):
+        self._objective_label.config(text="{}".format(status))
         
     def set_score(self, score):
         self._score_label.config(text="{}".format(score))
 
 
 
-class DotsApp:
+class DotsApp(object):
     """Top level GUI class for simple Dots & Co game"""
 
     def __init__(self, master):
@@ -98,6 +108,7 @@ class DotsApp:
         self._master = master
         master.title("Dots & Co")
         self._info_panel = InfoPanel(master)
+        
         self._playing = True
 
         self._image_manager = ImageManager('images/dots/', loader=load_image)
@@ -111,6 +122,7 @@ class DotsApp:
 
         self._objectives = ObjectiveManager(objectives)
 
+        self._info_panel.set_status(self._objectives.get_status())
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
@@ -130,6 +142,7 @@ class DotsApp:
 
         # Set initial score again to trigger view update automatically
         self._score(self._game.get_score())
+
 
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
@@ -259,7 +272,7 @@ class DotsApp:
 
     def reset(self):
         """Resets the game"""
-        raise NotImplementedError()
+        self.self_objectives.reset()
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -294,9 +307,8 @@ class DotsApp:
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New Game", command=self.reset)
         filemenu.add_command(label="Exit", command=self.exit)
+                                     
         
-    def reset(self):
-        pass
         
     def exit(self):
         if askyesno('Verify', 'Do you really wanna quit?'):
@@ -304,8 +316,28 @@ class DotsApp:
             self._master.destroy()
         else:
             showinfo('No', 'Welcome back')
+                                     
+                                     
         
-
+        
+            
+##        dots1 = r'images/1.gif'
+##        dots2 = r'images/2.gif'
+##        dots3 = r'images/3.gif'
+##        dots4 = r'images/4.gif'
+##        self._dots1 = PhotoImage(file=dots1)
+##        self._dots2 = PhotoImage(file=dots2)
+##        self._dots3 = PhotoImage(file=dots3)
+##        self._dots4 = PhotoImage(file=dots4)
+##        
+##        dots_label1 = tk.Label(info_frame, text="25", compound='top', image=self._dots1)
+##        dots_label1.pack(side=tk.RIGHT)
+##        dots_label2 = tk.Label(info_frame, text="25", compound='top', image=self._dots2)
+##        dots_label2.pack(side=tk.RIGHT)
+##        dots_label3 = tk.Label(info_frame, text="10", compound='top', image=self._dots3)
+##        dots_label3.pack(side=tk.RIGHT)
+##        dots_label4 = tk.Label(info_frame, text="15", compound='top', image=self._dots4)
+##        dots_label4.pack(side=tk.RIGHT)
 def main():
     """Sets-up the GUI for Dots & Co"""
     root = tk.Tk()
