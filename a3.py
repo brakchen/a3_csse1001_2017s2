@@ -84,27 +84,43 @@ class InfoPanel(tk.Frame):
 
         self._master = master
         info_frame = tk.Frame(master)
+<<<<<<< Updated upstream
         score_frame=tk.Frame(info_frame)
+=======
+        self._turns_frame = tk.Frame(info_frame)
+>>>>>>> Stashed changes
         companions_frame=tk.Frame(info_frame)
         dots_frame=tk.Frame(info_frame)
         self.dots_text_frame=Frame(dots_frame)
         self.dots_image_frame=Frame(dots_frame)
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
-        # socre attribute
-        self._score_label = tk.Label(score_frame, text="0", font=(None, 50))
-        self._score_label.pack()
+        self._turns_label = tk.Label(self._turns_frame, text="") #font=(None, 50))
+        self._turns_label.pack(anchor=tk.W)
 
-        # companion arrtibute
+        #Set center image and score next to image
         self.image_register("useless.gif")
-        tk.Label(companions_frame, text=None, image=self.get_image("useless.gif")).pack()
+        self._useless_image = tk.Label(companions_frame, text="",
+                                       font=(None, 40), image=self.get_image("useless.gif"),
+                                       compound="right")
+        self._useless_image.pack()
 
+
+<<<<<<< Updated upstream
 
         #frame pack
+=======
+        #Packing all the frames
+>>>>>>> Stashed changes
         info_frame.pack(side=tk.TOP, fill=tk.X)
-        score_frame.pack(side=tk.LEFT)
+        self._turns_frame.pack(side=tk.LEFT)
+        
         companions_frame.pack(side=tk.TOP)
         dots_frame.pack(side=tk.RIGHT)
+<<<<<<< Updated upstream
         self.dots_text_frame.pack()
         self.dots_image_frame.pack()
 
@@ -118,6 +134,25 @@ class InfoPanel(tk.Frame):
 
     def set_score(self, score):
         self._score_label.config(text="{}".format(score))
+=======
+        
+        self.dots_text_frame.pack()
+        self.dots_image_frame.pack()
+
+    def set_turns(self, turns):
+        self._turns_label.config(text="{}".format(turns))
+
+    def get_image(self,imageId):
+        
+        return self._imgContainer.get(imageId,"Sorry Please register image first")
+
+    def set_status(self, status,count):
+
+        tk.Label(self.dots_text_frame, image=status, text=count, compound="top").pack(side=tk.RIGHT)
+
+    def set_score(self, score):
+        self._useless_image.config(text="{}".format(score))
+>>>>>>> Stashed changes
 
     # functionality
     def image_register(self,imageId=None,load_all=False):
@@ -160,13 +195,22 @@ class DotsApp(object):
         self._objectivesView = ObjectivesView(master,image_manager=self._image_manager)
         self._objectives = ObjectiveManager(objectives)
 
+<<<<<<< Updated upstream
 ##        for data in self._objectives.get_status():
 ##                self._info_panel.set_status(self._objectivesView.load_image(data[0],(20,20)),data[1])
+=======
+        self._turns = 20
+        self._info_panel.set_turns(self.get_turns())
+>>>>>>> Stashed changes
         status_list = self._objectives.get_status()
         self._info_panel.set_status(self._objectivesView.load_image(status_list[0][0],(20,20)),status_list[0][1])
         self._info_panel.set_status(self._objectivesView.load_image(status_list[1][0],(20,20)),status_list[1][1])
         self._info_panel.set_status(self._objectivesView.load_image(status_list[2][0],(20,20)),status_list[2][1])
         self._info_panel.set_status(self._objectivesView.load_image(status_list[3][0],(20,20)),status_list[3][1])
+<<<<<<< Updated upstream
+=======
+        
+>>>>>>> Stashed changes
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
@@ -316,7 +360,12 @@ class DotsApp(object):
 
     def reset(self):
         """Resets the game"""
+<<<<<<< Updated upstream
         self.self_objectives.reset()
+=======
+        #self.self_objectives.reset()
+        self._game.reset()
+>>>>>>> Stashed changes
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -332,9 +381,20 @@ class DotsApp(object):
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
+<<<<<<< Updated upstream
         # Need to check whether the game is over
         #raise NotImplementedError()  # no mercy for stooges
 
+=======
+        self._turns -=  1
+        if self._turns == 0:
+            self._playing = False
+        return self._turns
+    
+    def get_turns(self):
+        return self._turns
+        
+>>>>>>> Stashed changes
     def _score(self, score):  # pylint: disable=no-self-use
         """Handles change in score
 
@@ -351,15 +411,23 @@ class DotsApp(object):
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New Game", command=self.reset)
         filemenu.add_command(label="Exit", command=self.exit)
+<<<<<<< Updated upstream
                                      
         
         
+=======
+      
+>>>>>>> Stashed changes
     def exit(self):
         if askyesno('Verify', 'Do you really wanna quit?'):
             showwarning('Yes', "GG")
             self._master.destroy()
         else:
             showinfo('No', 'Welcome back')
+<<<<<<< Updated upstream
+=======
+ 
+>>>>>>> Stashed changes
                                      
 def main():
     """Sets-up the GUI for Dots & Co"""
