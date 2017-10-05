@@ -114,10 +114,8 @@ class InfoPanel(tk.Frame):
 
     def set_status(self, status,count):
 
-        tk.Label(self.dots_text_frame, image=status).pack()
-        tk.Label(self.dots_image_frame, text=count).pack()
+        tk.Label(self.dots_text_frame, image=status, text=count, compound="top").pack(side=tk.RIGHT)
 
-        
     def set_score(self, score):
         self._score_label.config(text="{}".format(score))
 
@@ -153,20 +151,22 @@ class DotsApp(object):
         self._playing = True
         self._image_manager = ImageManager('images/dots/', loader=load_image)
 
-
-        
         # Game
         counts = [10, 15, 25, 25]
         random.shuffle(counts)
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
-        print(BasicDot(1).get_view_id())
+
         self._objectivesView = ObjectivesView(master,image_manager=self._image_manager)
         self._objectives = ObjectiveManager(objectives)
-        print(self._objectives.get_status())
 
-        for data in self._objectives.get_status():
-                self._info_panel.set_status(self._objectivesView.load_image(data[0],(20,20)),data[1])
+##        for data in self._objectives.get_status():
+##                self._info_panel.set_status(self._objectivesView.load_image(data[0],(20,20)),data[1])
+        status_list = self._objectives.get_status()
+        self._info_panel.set_status(self._objectivesView.load_image(status_list[0][0],(20,20)),status_list[0][1])
+        self._info_panel.set_status(self._objectivesView.load_image(status_list[1][0],(20,20)),status_list[1][1])
+        self._info_panel.set_status(self._objectivesView.load_image(status_list[2][0],(20,20)),status_list[2][1])
+        self._info_panel.set_status(self._objectivesView.load_image(status_list[3][0],(20,20)),status_list[3][1])
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
@@ -361,27 +361,6 @@ class DotsApp(object):
         else:
             showinfo('No', 'Welcome back')
                                      
-                                     
-        
-        
-            
-##        dots1 = r'images/1.gif'
-##        dots2 = r'images/2.gif'
-##        dots3 = r'images/3.gif'
-##        dots4 = r'images/4.gif'
-##        self._dots1 = PhotoImage(file=dots1)
-##        self._dots2 = PhotoImage(file=dots2)
-##        self._dots3 = PhotoImage(file=dots3)
-##        self._dots4 = PhotoImage(file=dots4)
-##        
-##        dots_label1 = tk.Label(info_frame, text="25", compound='top', image=self._dots1)
-##        dots_label1.pack(side=tk.RIGHT)
-##        dots_label2 = tk.Label(info_frame, text="25", compound='top', image=self._dots2)
-##        dots_label2.pack(side=tk.RIGHT)
-##        dots_label3 = tk.Label(info_frame, text="10", compound='top', image=self._dots3)
-##        dots_label3.pack(side=tk.RIGHT)
-##        dots_label4 = tk.Label(info_frame, text="15", compound='top', image=self._dots4)
-##        dots_label4.pack(side=tk.RIGHT)
 def main():
     """Sets-up the GUI for Dots & Co"""
     root = tk.Tk()
