@@ -6,15 +6,16 @@ Semester 2, 2017
 # There are a number of jesting comments in the support code
 # They should not be taken seriously. Keep it fun folks :D
 # Students are welcome to add their own source code humour, provided it remains civil
+from copy import copy
 from tkinter import *
 import tkinter as tk
 from tkinter.messagebox import *
 import os
 import random
 
-
 try:
     from PIL import ImageTk, Image
+
     HAS_PIL = True
 except:
     HAS_PIL = False
@@ -42,11 +43,9 @@ def load_image_pil(image_id, size, prefix, suffix='.png'):
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
 
-
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return ImageTk.PhotoImage(Image.open(file_path))
-
 
 
 def load_image_tk(image_id, size, prefix, suffix='.gif'):
@@ -78,18 +77,15 @@ COMPANIONSMANAGER = {
 # Define your classes here
 
 class InfoPanel(tk.Frame):
-
     def __init__(self, master):
-        self._imgContainer={}
-
+        self._imgContainer = {}
+        self.dotsSerialize = []
         self._master = master
         info_frame = tk.Frame(master)
-        score_frame=tk.Frame(info_frame)
-        companions_frame=tk.Frame(info_frame)
-        dots_frame=tk.Frame(info_frame)
-        self.dots_text_frame=Frame(dots_frame)
-        self.dots_image_frame=Frame(dots_frame)
-
+        score_frame = tk.Frame(info_frame)
+        companions_frame = tk.Frame(info_frame)
+        dots_frame = tk.Frame(info_frame)
+        self.dots_frame = Frame(dots_frame)
 
         # socre attribute
         self._score_label = tk.Label(score_frame, text="0", font=(None, 50))
@@ -99,37 +95,53 @@ class InfoPanel(tk.Frame):
         self.image_register("useless.gif")
         tk.Label(companions_frame, text=None, image=self.get_image("useless.gif")).pack()
 
-
-        #frame pack
+        # frame pack
         info_frame.pack(side=tk.TOP, fill=tk.X)
         score_frame.pack(side=tk.LEFT)
         companions_frame.pack(side=tk.TOP)
         dots_frame.pack(side=tk.RIGHT)
-        self.dots_text_frame.pack()
-        self.dots_image_frame.pack()
+        self.dots_frame.pack()
 
     # getter ans setter
-    def get_image(self,imageId):
-        return self._imgContainer.get(imageId,"Sorry Please register image first")
+    def get_image(self, imageId):
+        return self._imgContainer.get(imageId, "Sorry Please register image first")
 
-    def set_status(self, status,count):
+    def set_status(self, image_id, count, obj):
+        label = tk.Label(self.dots_frame, image=image_id, text=count, compound="top")
+        self.dotsSerialize.append([obj.get_kind(),
+                                   obj.get_name(),
+                                   count,
+                                   label])
+        label.pack(side=tk.LEFT)
 
-        tk.Label(self.dots_text_frame, image=status, text=count, compound="top").pack(side=tk.RIGHT)
 
     def set_score(self, score):
         self._score_label.config(text="{}".format(score))
 
+    def set_docts_step(self, obj):
+        for num in range(len(self.dotsSerialize)):
+            if obj.get_status()[num][1] is not 0:
+                if obj.get_status()[num][1] is not self.dotsSerialize[num][2]:
+                    self.dotsSerialize[num][3].config(text=self.dotsSerialize[num][2] - obj.get_status()[num][1])
+                    self.dotsSerialize[num][2] = obj.get_status()[num][1]
+            else:
+                self.dotsSerialize[num][3].config(text=obj.get_status()[num][1])
+                self.dotsSerialize[num][2] = obj.get_status()[num][1]
+            # print("value:{0}-----data:{1}".format(self.dotsSerialize[num][2], obj.get_status()[num][1]))
+        print("\n\n")
+        pass
+
+
     # functionality
-    def image_register(self,imageId=None,load_all=False):
+    def image_register(self, imageId=None, load_all=False):
         if imageId is None and not load_all:
             raise KeyError("Sorry image id is important")
         else:
             if load_all:
-                for id,path in COMPANIONSMANAGER:
+                for id, path in COMPANIONSMANAGER:
                     self._imgContainer[id] = PhotoImage(file=COMPANIONSMANAGER[path])
             else:
-                self._imgContainer[imageId]=PhotoImage(file=COMPANIONSMANAGER[imageId])
-
+                self._imgContainer[imageId] = PhotoImage(file=COMPANIONSMANAGER[imageId])
 
 
 class DotsApp(object):
@@ -143,10 +155,9 @@ class DotsApp(object):
         """
         self._master = master
         master.title("Dots & Co")
-        #self define
+        # self define
         self._info_panel = InfoPanel(master)
         self._menu(master)
-
 
         self._playing = True
         self._image_manager = ImageManager('images/dots/', loader=load_image)
@@ -156,18 +167,16 @@ class DotsApp(object):
         random.shuffle(counts)
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
-
-        self._objectivesView = ObjectivesView(master,image_manager=self._image_manager)
         self._objectives = ObjectiveManager(objectives)
 
-##        for data in self._objectives.get_status():
-##                self._info_panel.set_status(self._objectivesView.load_image(data[0],(20,20)),data[1])
-        status_list = self._objectives.get_status()
-        self._info_panel.set_status(self._objectivesView.load_image(status_list[0][0],(20,20)),status_list[0][1])
-        self._info_panel.set_status(self._objectivesView.load_image(status_list[1][0],(20,20)),status_list[1][1])
-        self._info_panel.set_status(self._objectivesView.load_image(status_list[2][0],(20,20)),status_list[2][1])
-        self._info_panel.set_status(self._objectivesView.load_image(status_list[3][0],(20,20)),status_list[3][1])
-        # Game
+        # Please write your code here----------------------------------------------------------
+        self._objectivesView = ObjectivesView(master, image_manager=self._image_manager)
+        for data in self._objectives.get_status():
+            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)), data[1], data[0])
+        # self._info_panel.set_status(self._objectivesView )
+        # --------------------------------------------------------------------------------------
+
+
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
@@ -186,7 +195,6 @@ class DotsApp(object):
 
         # Set initial score again to trigger view update automatically
         self._score(self._game.get_score())
-
 
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
@@ -231,6 +239,7 @@ class DotsApp(object):
             position (tuple<int, int>): The position where the connection was
                                         dropped
         """
+
         if not self._playing:
             return
 
@@ -249,8 +258,10 @@ class DotsApp(object):
             start (tuple<int, int>): The position of the starting dot
             end (tuple<int, int>): The position of the ending dot
         """
+        # print("start:{start}----end:{end}".format(start=start,end=end))
         self._grid_view.draw_connection(start, end,
                                         self._game.grid[start].get_dot().get_kind())
+
 
     def _undo(self, positions):
         """Removes all the given dot connections from the grid view
@@ -300,6 +311,7 @@ class DotsApp(object):
         Raises:
             IndexError: If position cannot be activated
         """
+
         if len(positions) is None:
             return
 
@@ -316,7 +328,7 @@ class DotsApp(object):
 
     def reset(self):
         """Resets the game"""
-        self.self_objectives.reset()
+        self._objectives.reset()
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -333,7 +345,9 @@ class DotsApp(object):
     def _drop_complete(self):
         """Handles the end of a drop animation"""
         # Need to check whether the game is over
-        #raise NotImplementedError()  # no mercy for stooges
+        # raise NotImplementedError()  # no mercy for stooges
+        if self._playing:
+            pass
 
     def _score(self, score):  # pylint: disable=no-self-use
         """Handles change in score
@@ -342,25 +356,26 @@ class DotsApp(object):
             score (int): The new score
         """
         self._info_panel.set_score(self._game.get_score())
+        self._info_panel.set_docts_step(self._objectives)
+
 
     def _menu(self, master):
-        
+
         menubar = Menu(master)
         master.config(menu=menubar)
         filemenu = Menu(menubar)
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New Game", command=self.reset)
         filemenu.add_command(label="Exit", command=self.exit)
-                                     
-        
-        
+
     def exit(self):
         if askyesno('Verify', 'Do you really wanna quit?'):
             showwarning('Yes', "GG")
             self._master.destroy()
         else:
             showinfo('No', 'Welcome back')
-                                     
+
+
 def main():
     """Sets-up the GUI for Dots & Co"""
     root = tk.Tk()
