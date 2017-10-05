@@ -19,7 +19,7 @@ try:
 except:
     HAS_PIL = False
 
-from view import GridView
+from view import GridView, ObjectivesView
 from game import DotGame, ObjectiveManager
 from dot import BasicDot
 from util import create_animation, ImageManager
@@ -41,9 +41,13 @@ def load_image_pil(image_id, size, prefix, suffix='.png'):
         prefix (str): The prefix to prepend to the filepath (i.e. root directory
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
+
+
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return ImageTk.PhotoImage(Image.open(file_path))
+
+
 
 def load_image_tk(image_id, size, prefix, suffix='.gif'):
     """Returns a tkinter photo image
@@ -54,14 +58,21 @@ def load_image_tk(image_id, size, prefix, suffix='.gif'):
         prefix (str): The prefix to prepend to the filepath (i.e. root directory
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
+
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return tk.PhotoImage(file=file_path)
 
+
 # This allows you to simply load png images with PIL if you have it,
 # otherwise will default to gifs through tkinter directly
 load_image = load_image_pil if HAS_PIL else load_image_tk
-
+COMPANIONSMANAGER = {
+    "useless.gif": "images/companions/useless.gif",
+    "penguin.gif": "images/companions/penguin.gif",
+    "penguin.png": "images/companions/penguin.png",
+    "penguin_large.png": "images/companions/penguin_large.png",
+}
 
 
 # Define your classes here
@@ -69,30 +80,57 @@ load_image = load_image_pil if HAS_PIL else load_image_tk
 class InfoPanel(tk.Frame):
 
     def __init__(self, master):
+        self._imgContainer={}
 
         self._master = master
         info_frame = tk.Frame(master)
-        info_frame.pack(side=tk.TOP, fill=tk.X)
-        
-        self._score_label = tk.Label(info_frame, text="0", font=(None, 50))
-        self._score_label.pack(side=tk.LEFT)
-        
-        self.set_image(info_frame)
+        score_frame=tk.Frame(info_frame)
+        companions_frame=tk.Frame(info_frame)
+        dots_frame=tk.Frame(info_frame)
+        self.dots_text_frame=Frame(dots_frame)
+        self.dots_image_frame=Frame(dots_frame)
 
-        self._objective_label = tk.Label(info_frame, text="")
-        self._objective_label.pack(side=tk.RIGHT)
-        
-    def set_image(self, info_frame):
-        filename = r"images/companions/useless.gif"
-        self._img = PhotoImage(file=filename)
-        img_label = tk.Label(info_frame, text=None, image=self._img)
-        img_label.pack(side=tk.TOP)
-        
-    def set_status(self, status):
-        self._objective_label.config(text="{}".format(status))
+
+        # socre attribute
+        self._score_label = tk.Label(score_frame, text="0", font=(None, 50))
+        self._score_label.pack()
+
+        # companion arrtibute
+        self.image_register("useless.gif")
+        tk.Label(companions_frame, text=None, image=self.get_image("useless.gif")).pack()
+
+
+        #frame pack
+        info_frame.pack(side=tk.TOP, fill=tk.X)
+        score_frame.pack(side=tk.LEFT)
+        companions_frame.pack(side=tk.TOP)
+        dots_frame.pack(side=tk.RIGHT)
+        self.dots_text_frame.pack()
+        self.dots_image_frame.pack()
+
+    # getter ans setter
+    def get_image(self,imageId):
+        return self._imgContainer.get(imageId,"Sorry Please register image first")
+
+    def set_status(self, status,count):
+
+        tk.Label(self.dots_text_frame, image=status).pack()
+        tk.Label(self.dots_image_frame, text=count).pack()
+
         
     def set_score(self, score):
         self._score_label.config(text="{}".format(score))
+
+    # functionality
+    def image_register(self,imageId=None,load_all=False):
+        if imageId is None and not load_all:
+            raise KeyError("Sorry image id is important")
+        else:
+            if load_all:
+                for id,path in COMPANIONSMANAGER:
+                    self._imgContainer[id] = PhotoImage(file=COMPANIONSMANAGER[path])
+            else:
+                self._imgContainer[imageId]=PhotoImage(file=COMPANIONSMANAGER[imageId])
 
 
 
@@ -107,22 +145,28 @@ class DotsApp(object):
         """
         self._master = master
         master.title("Dots & Co")
+        #self define
         self._info_panel = InfoPanel(master)
-        
-        self._playing = True
-
-        self._image_manager = ImageManager('images/dots/', loader=load_image)
         self._menu(master)
+
+
+        self._playing = True
+        self._image_manager = ImageManager('images/dots/', loader=load_image)
+
+
         
         # Game
         counts = [10, 15, 25, 25]
         random.shuffle(counts)
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
-
+        print(BasicDot(1).get_view_id())
+        self._objectivesView = ObjectivesView(master,image_manager=self._image_manager)
         self._objectives = ObjectiveManager(objectives)
+        print(self._objectives.get_status())
 
-##        self._info_panel.set_status(self._objectives.get_status())
+        for data in self._objectives.get_status():
+                self._info_panel.set_status(self._objectivesView.load_image(data[0],(20,20)),data[1])
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
