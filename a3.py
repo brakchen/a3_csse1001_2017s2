@@ -80,20 +80,26 @@ class InfoPanel(tk.Frame):
     def __init__(self, master):
         self._imgContainer = {}
         self.dotsSerialize = []
+        
         self._master = master
         info_frame = tk.Frame(master)
-
+        info_frame.pack(side=tk.TOP, fill=tk.X)
 
         self._turns_frame = tk.Frame(info_frame)
+        self._turns_frame.pack(side=tk.LEFT)
 
         companions_frame=tk.Frame(info_frame)
-        dots_frame=tk.Frame(info_frame)
-        companions_frame = tk.Frame(info_frame)
-        dots_frame = tk.Frame(info_frame)
-        self.dots_frame = Frame(dots_frame)
+        companions_frame.pack(side=tk.TOP)
         
-        self._turns_label = tk.Label(self._turns_frame, text="") #font=(None, 50))
-        self._turns_label.pack(anchor=tk.W)
+        dots_frame=tk.Frame(info_frame)
+        dots_frame.pack(side=tk.RIGHT)
+        
+        self.dots_frame = Frame(dots_frame)
+        self.dots_frame.pack()
+        
+        self._turns_label = tk.Label(self._turns_frame, text="", font=(None, 50))
+       
+        self._turns_label.pack(side=tk.TOP)
 
 
         #Set center image and score next to image
@@ -103,20 +109,11 @@ class InfoPanel(tk.Frame):
                                        compound="right")
         self._useless_image.pack()
 
-
         #Packing all the frames
 
-        info_frame.pack(side=tk.TOP, fill=tk.X)
-        self._turns_frame.pack(side=tk.LEFT)
+    def set_turns(self, turn):
         
-        companions_frame.pack(side=tk.TOP)
-        dots_frame.pack(side=tk.RIGHT)
-        self.dots_frame.pack()
-
-
-
-    def set_turns(self, turns):
-        self._turns_label.config(text="{}".format(turns))
+        self._turns_label.config(text = "{}".format(turn))
 
     def get_image(self,imageId):
         
@@ -134,20 +131,11 @@ class InfoPanel(tk.Frame):
     def set_score(self, score):
         self._useless_image.config(text="{}".format(score))
 
-
     def set_docts_step(self, obj):
         for num in range(len(self.dotsSerialize)):
-            if obj.get_status()[num][1] is not 0:
                 if obj.get_status()[num][1] is not self.dotsSerialize[num][2]:
-                    self.dotsSerialize[num][3].config(text=self.dotsSerialize[num][2] - obj.get_status()[num][1])
+                    self.dotsSerialize[num][3].config(text=obj.get_status()[num][1])
                     self.dotsSerialize[num][2] = obj.get_status()[num][1]
-            else:
-                self.dotsSerialize[num][3].config(text=obj.get_status()[num][1])
-                self.dotsSerialize[num][2] = obj.get_status()[num][1]
-            # print("value:{0}-----data:{1}".format(self.dotsSerialize[num][2], obj.get_status()[num][1]))
-        print("\n\n")
-        pass
-
 
     # functionality
     def image_register(self, imageId=None, load_all=False):
@@ -179,6 +167,7 @@ class DotsApp(object):
         self._playing = True
         self._image_manager = ImageManager('images/dots/', loader=load_image)
 
+        self._turns = 21
         # Game
         counts = [10, 15, 25, 25]
         random.shuffle(counts)
@@ -186,19 +175,9 @@ class DotsApp(object):
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
         self._objectives = ObjectiveManager(objectives)
 
-
-
-        self._turns = 20
-        self._info_panel.set_turns(self.get_turns())
-
-
-        # Please write your code here----------------------------------------------------------
         self._objectivesView = ObjectivesView(master, image_manager=self._image_manager)
         for data in self._objectives.get_status():
             self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)), data[1], data[0])
-        # self._info_panel.set_status(self._objectivesView )
-        # --------------------------------------------------------------------------------------
-
 
 
         dead_cells = {(2, 2), (2, 3), (2, 4),
@@ -370,16 +349,7 @@ class DotsApp(object):
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-        if self._playing:
-            self._turns -=  1
-            if self._turns == 0:
-                self._playing = False
-            return self._turns
-            
-    def get_turns(self):
-        return self._turns
-
-
+        pass
     def _score(self, score):  # pylint: disable=no-self-use
         """Handles change in score
 
@@ -388,7 +358,7 @@ class DotsApp(object):
         """
         self._info_panel.set_score(self._game.get_score())
         self._info_panel.set_docts_step(self._objectives)
-
+        self._info_panel.set_turns(self.config_turns())
 
     def _menu(self, master):
 
@@ -405,6 +375,13 @@ class DotsApp(object):
             self._master.destroy()
         else:
             showinfo('No', 'Welcome back')
+            
+    def config_turns(self):
+        self._turns -= 1
+        if self._turns == 0 :
+            self._playing = False
+        return self._turns
+        
 
 
 def main():
