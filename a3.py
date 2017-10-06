@@ -83,31 +83,29 @@ class InfoPanel(tk.Frame):
         
         self._master = master
         info_frame = tk.Frame(master)
-        info_frame.pack(side=tk.TOP, fill=tk.X)
+        info_frame.pack()
 
         self._turns_frame = tk.Frame(info_frame)
-        self._turns_frame.pack(side=tk.LEFT)
+        self._turns_frame.pack(side=tk.LEFT, ipadx=50)
 
         companions_frame=tk.Frame(info_frame)
-        companions_frame.pack(side=tk.TOP)
+        companions_frame.pack(side=tk.LEFT, expand=True)
         
-        dots_frame=tk.Frame(info_frame)
-        dots_frame.pack(side=tk.RIGHT)
+        self.dots_frame = Frame(info_frame)
+        self.dots_frame.pack(side=tk.LEFT, expand=True)
         
-        self.dots_frame = Frame(dots_frame)
-        self.dots_frame.pack()
-        
-        self._turns_label = tk.Label(self._turns_frame, text="", font=(None, 50))
-       
-        self._turns_label.pack(side=tk.TOP)
-
+        self._turns_label = tk.Label(self._turns_frame,
+                                     text="", font=(None, 30))
+        self._turns_label.pack(anchor=tk.W, expand=False)
 
         #Set center image and score next to image
         self.image_register("useless.gif")
         self._useless_image = tk.Label(companions_frame, text="",
-                                       font=(None, 40), image=self.get_image("useless.gif"),
+                                       font=(None, 40),
+                                       image=self.get_image("useless.gif"),
                                        compound="right")
-        self._useless_image.pack()
+
+        self._useless_image.pack(side=tk.RIGHT)
 
         #Packing all the frames
 
@@ -120,13 +118,13 @@ class InfoPanel(tk.Frame):
         return self._imgContainer.get(imageId,"Sorry Please register image first")
 
     def set_status(self, image_id, count, obj):
-        label = tk.Label(self.dots_frame, image=image_id, text=count, compound="top")
+        self._status_label = tk.Label(self.dots_frame, image=image_id, text=count, compound="top")
+        self._status_label.pack(side=tk.RIGHT)
+
         self.dotsSerialize.append([obj.get_kind(),
                                    obj.get_name(),
                                    count,
-                                   label])
-        label.pack(side=tk.LEFT)
-
+                                   self._status_label])
 
     def set_score(self, score):
         self._useless_image.config(text="{}".format(score))
