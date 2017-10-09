@@ -19,7 +19,7 @@ try:
 except ImportError:
 	HAS_PIL = False
 
-from view import GridView
+from view import GridView, ObjectivesView
 from game import DotGame, ObjectiveManager
 from dot import BasicDot
 from util import create_animation, ImageManager
@@ -86,8 +86,6 @@ class InfoPanel(tk.Frame):
 	def __init__(self, master):
 		self._imgContainer = {}
 		self.dotsSerialize = []
-
-		self._master = master
 		info_frame = tk.Frame(master)
 		_turns_frame = tk.Frame(info_frame)
 
@@ -106,6 +104,7 @@ class InfoPanel(tk.Frame):
 									   image=self.get_image("useless.gif"),
 									   compound="right")
 
+
 		# Packing all the frames
 		info_frame.pack()
 		_turns_frame.pack(side=tk.LEFT, ipadx=50)
@@ -113,6 +112,8 @@ class InfoPanel(tk.Frame):
 		self.dots_frame.pack(side=tk.LEFT, expand=True)
 		self._turns_label.pack(anchor=tk.W, expand=False)
 		self._useless_image.pack(side=tk.RIGHT)
+
+
 
 
 	def set_turns(self, turn):
@@ -229,10 +230,6 @@ class DotsApp:
 		# ------------------------
 		self._info_panel = InfoPanel(master)
 		self._interval_bar = IntervalBar(master, 60, 6, (80, 80))
-
-
-
-
 		# --------------------------
 		self._master = master
 
@@ -247,7 +244,14 @@ class DotsApp:
 		objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
 		self._objectives = ObjectiveManager(objectives)
-
+		# --------------------------------
+		self._objectivesView = ObjectivesView(master,
+											  image_manager=self._image_manager)
+		for data in self._objectives.get_status():
+			self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
+										data[1],
+										data[0])
+		# --------------------------------
 		# Game
 		dead_cells = {(2, 2), (2, 3), (2, 4),
 					  (3, 2), (3, 3), (3, 4),
@@ -433,6 +437,7 @@ class DotsApp:
 		#     self._refresh_status()
 		#
 		#     return self.animate(steps)
+		self._interval_bar.config_progress()
 
 		# Need to check whether the game is over
 		raise NotImplementedError()  # no mercy for stooges
@@ -447,7 +452,6 @@ class DotsApp:
 		# Sometimes I believe Python ignores all my comments :(
 		score = self._game.get_score()
 		self._info_panel.set_score(score)
-
 		self._info_panel.set_docts_step(self._objectives.get_status())
 		self._info_panel.set_turns(self._game.get_moves())
 		print("Score is now {}.".format(score))
