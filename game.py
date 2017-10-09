@@ -7,7 +7,8 @@ Normal cells (Cell) can hold a dot (dot.AbstractDot); disabled cells (VoidCell) 
 
 from enum import Enum
 
-from factory import AbstractFactory, WeightedFactory
+from companion import AbstractCompanion
+from factory import AbstractFactory, DotFactory, CellFactory
 from modules.ee import EventEmitter
 from modules.matrix import Matrix
 from modules.weighted_selector import WeightedSelector
@@ -15,132 +16,7 @@ from modules.weighted_selector import WeightedSelector
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.0.0rc3"
-
-
-class AbstractCell:
-    """An abstract cell in a Dot & Co grid"""
-
-    def get_dot(self):
-        """(Dot) Returns the dot on this cell"""
-        raise NotImplementedError()
-
-    def is_enabled(self):
-        """(bool) Returns True iff this cell is enabled (a dot can fall into it if empty)"""
-        raise NotImplementedError()
-
-    def is_open(self):
-        """(bool) Returns True iff this cell is allowed to have connections"""
-        raise NotImplementedError()
-
-    def is_unoccupied(self):
-        """(bool) Returns True iff this cell is unoccupied"""
-        raise NotImplementedError()
-
-    def can_connect(self, other):
-        """(bool) Returns True iff this cell can connect to other - not necessarily transitive or anti-symmetric
-        
-        Parameters:
-            other (AbstractCell): The other cell
-        """
-        raise NotImplementedError()
-
-
-class Cell(AbstractCell):
-    """A cell in a Dot & Co grid"""
-
-    def __init__(self, dot):
-        """Constructor
-
-        Parameters:
-            dot (Dot): The dot to put in this cell
-        """
-        self._dot = dot
-        self._enabled = True
-        self._open = True
-
-    def is_enabled(self):
-        """(bool) Returns True iff this cell is enabled (a dot can fall into it if empty)"""
-        return self._enabled
-
-    def is_open(self):
-        """(bool) Returns True iff this cell is allowed to have connections"""
-        return self._open
-
-    def is_unoccupied(self):
-        """(bool) Returns True iff this cell is unoccupied"""
-        return self.get_dot() is None
-
-    def can_connect(self, other):
-        """(bool) Returns True iff this cell can connect to other - not necessarily transitive or anti-symmetric
-
-        Parameters:
-            other (AbstractCell): The other cell
-        """
-        return other.get_dot() is not None and self.get_dot() == other.get_dot()
-
-    def get_dot(self):
-        """(Dot) Returns the dot on this cell"""
-        return self._dot
-
-    def set_dot(self, dot):
-        """Sets the dot of this cell to 'dot'"""
-        self._dot = dot
-
-    def move_to(self, other):
-        """Moves the contents of this cell to other
-
-        Parameters:
-            other (Cell): The other (destination) cell
-        """
-        other.set_dot(self.get_dot())
-        self.set_dot(None)
-
-    def swap_with(self, other):
-        """Swaps the contents of this cell with other
-
-        Parameters:
-            other (Cell): The other (destination) cell
-        """
-        dot = self.get_dot()
-        self.set_dot(other.get_dot())
-        other.set_dot(dot)
-
-    def __str__(self):
-        """Returns human readable string of this cell & its dot"""
-        return "{}({})".format(self.__class__.__name__, self._dot)
-
-
-class VoidCell(AbstractCell):
-    """A cell void in a Dots & Co grid"""
-
-    def get_dot(self):
-        """(Dot) Returns None, since no dot exists on this cell"""
-        return None
-
-    def is_enabled(self):
-        """(bool) Returns False, since void cells can never contain a dot"""
-        return False
-
-    def is_open(self):
-        """(bool) Returns False, since void cells can never contain a dot"""
-        return False
-
-    def is_unoccupied(self):
-        """(bool) Returns False, since void cells are never unoccupied"""
-        return False
-
-    def can_connect(self, other):
-        """(bool) Returns False as void cells cannot connect to anything
-
-        Parameters:
-            other (AbstractCell): The other cell
-        """
-        return False
-
-    def __str__(self):
-        """Returns human readable string of this cell"""
-        return self.__class__.__name__ + "()"
+__version__ = "1.1.1"
 
 
 class DotGrid(Matrix):
@@ -161,6 +37,9 @@ class DotGrid(Matrix):
         Preconditions:
             connected is reflexive (connected(a, b) == connected(b, a))
         """
+        assert isinstance(dot_factory, AbstractFactory)
+        assert isinstance(cell_factory, AbstractFactory)
+
         super().__init__(size)
 
         self._animation = animation
@@ -173,18 +52,47 @@ class DotGrid(Matrix):
 
     def get_drop_connection(self, position):
         """Returns the position of the cell that would drop its dot to replace the cell at 'position'
-        
+
         Parameters:
             position (tuple<int, int>): The position of the cell being replaced
-            
+
         Return:
             tuple<int, int>: The position of the cell that would immediately replace it
-            None: If no such cell exists (i.e. position is a top-row cell)
+            tuple<-1, int>: If no such cell exists (i.e. position is a top-row cell)
         """
         row, column = position
 
         previous = None
         for row in range(row, -1, -1):
+            position = row, column
+            cell = self[position]
+            if not cell.is_enabled():
+                continue
+
+            if previous is not None:
+                return position
+
+            previous = position
+
+        if previous is not None:
+            return -1, column
+
+    def get_drop_connection_down(self, position):
+        """Returns the position of the cell that the cell at position would drop its dot into
+
+        Parameters:
+            position (tuple<int, int>): A cell position
+
+        Return:
+            tuple<int, int>: The position of the cell that would have its dot replaced by the one 
+                             'position', if it were to be dropped
+            tuple<-1, int>: If no such cell exists (i.e. position is a bottom-row cell)
+        """
+        row, column = position
+
+        previous = None
+        rows, _ = self.size()
+        for row in range(row, rows):
             position = row, column
             cell = self[position]
             if not cell.is_enabled():
@@ -213,7 +121,7 @@ class DotGrid(Matrix):
             if self[position].is_enabled():
                 self[position].set_dot(self.generate_dot(position))
 
-    def find_connected(self, root, positions=None):
+    def find_connected(self, root, positions=None, connected=None):
         """Finds all cells connected to the one at given position
 
         Parameters:
@@ -224,6 +132,9 @@ class DotGrid(Matrix):
             set<tuple<int, int>>: A set of (row, column) positions for each
                                   connected dot, including root
         """
+
+        if connected is None:
+            connected = self._connected
 
         # Default to all cells
         if not positions:
@@ -251,7 +162,7 @@ class DotGrid(Matrix):
                         continue
 
                     # Ensure the kind matches
-                    if self._connected(self[root], self[adjacent]):
+                    if connected(self[root], self[adjacent]):
                         nodes.append(adjacent)
 
         return visited
@@ -306,12 +217,10 @@ class DotGrid(Matrix):
                     if not cell.is_unoccupied():
                         continue
 
-                    # TODO: refactor
                     above_position = self.get_drop_connection(position)
                     above_cell = self[above_position]
 
-                    # TODO: add check for voids?
-                    if above_cell.get_dot() and cell.is_unoccupied():
+                    if above_cell.get_dot():
                         # print("Moving {}@{} to {}@{}".format(above_cell, above_position, cell, position))
                         above_cell.move_to(cell)
 
@@ -444,16 +353,20 @@ class ObjectiveManager:
                     List of (objective, count) pairs, where count is the 
                     total number of times objective needs to be tallied
         """
-        self._objectives = objectives
+        self._objective_counts = objectives
         self.reset()
 
     def reset(self):
         """Resets the objective progress"""
-        self.status = [list(objective) for objective in self._objectives]
+        self.status = [list(objective) for objective in self._objective_counts]
 
     def is_complete(self):
         """(bool) Returns True iff all objectives have been reached"""
         return all(objective[1] == 0 for objective in self.status)
+
+    def __len__(self):
+        """Returns the total number of objectives (including completed)"""
+        return len(self._objective_counts)
 
     def increase_progress(self, objective, count):
         """Increases the progress of objective by count
@@ -466,15 +379,12 @@ class ObjectiveManager:
             bool: True iff the objective has been reached
         """
         for i, (current_objective, _) in enumerate(self.status):
-            if objective.get_kind():
-                if current_objective.get_kind() != objective.get_kind():
-                    continue
-            elif current_objective != objective:
-                continue
 
-            self.status[i][1] = max(self.status[i][1] - count, 0)
+            if isinstance(objective, type(current_objective)) and \
+                            current_objective.get_kind() in (None, objective.get_kind()):
+                self.status[i][1] = max(self.status[i][1] - count, 0)
 
-            return True
+                return True
 
         return False
 
@@ -487,22 +397,6 @@ class ObjectiveManager:
                     remaining before the corresponding objective is reached
         """
         return self.status
-
-
-class CellFactory(AbstractFactory):
-    def __init__(self, dead_cells=None):
-        """
-        Constructor
-        
-        Parameters:
-            dead_cells (set<tuple<int, int>>): Set of cells that are disabled (i.e. VoidCells) 
-        """
-        if dead_cells is None:
-            dead_cells = set()
-        self._dead_cells = dead_cells
-
-    def generate(self, position):
-        return Cell(None) if position not in self._dead_cells else VoidCell()
 
 
 class CoreDotGame(EventEmitter):
@@ -522,8 +416,7 @@ class CoreDotGame(EventEmitter):
         """Constructor
 
         Parameters:
-            dot_factor (AbstractFactory): Factory for creating new dots
-            kinds (set<int|str>): All possible kinds that a dot could be
+            dot_factory (AbstractFactory): Factory for creating new dots
             size (tuple<int, int>): The number of (rows, columns) in the game
             dead_cells (set<tuple<int, int>>): Set of cells that are disabled (i.e. VoidCells)
             objectives (ObjectiveManager): Objectives for the game
@@ -559,11 +452,14 @@ class CoreDotGame(EventEmitter):
         """(bool) Returns True iff the game is resolving a move"""
         return self._resolving
 
-    # TODO: generalise so will work with wildcards
     def get_connection_kind(self):
         """(int|str) Returns the kind of the current selection, else None"""
-        if len(self._connected):
-            return self.grid[self._connected[-1]].get_dot().get_kind()
+
+        for position in self._connected:
+            dot = self.grid[position].get_dot()
+
+            if dot and dot.get_kind():
+                return dot.get_kind()
 
     def get_connection_path(self):
         """(list<tuple<int, int>>) Returns the selection path, a list of positions,
@@ -594,12 +490,16 @@ class CoreDotGame(EventEmitter):
             bool: True iff a connection was made or removed (including undoing the most recent)
         """
 
+        cell = self.grid[position]
+        dot = cell.get_dot()
+
         # check for disabled cell
-        if not self.grid[position].is_open():
+        if not cell.is_open():
             return False
 
         if len(self._connected) == 0:
-            self._connected.append(position)
+            if dot and dot.can_connect():
+                self._connected.append(position)
             return False
 
         last_position = self._connected[-1]
@@ -608,11 +508,14 @@ class CoreDotGame(EventEmitter):
             self.undo(position)
             return True
 
-        elif self.grid.are_cells_adjacent(position, last_position) and \
-                        self.grid[last_position].get_dot().get_kind() == self.grid[position].get_dot().get_kind():
-            self.emit("connect", last_position, position)
-            self._connected.append(position)
-            return True
+        elif self.grid.are_cells_adjacent(position, last_position):
+
+            connection_kind = self.get_connection_kind()
+
+            if dot.can_connect() and (dot.get_kind() in (connection_kind, None) or connection_kind is None):
+                self.emit("connect", last_position, position)
+                self._connected.append(position)
+                return True
 
         return False
 
@@ -650,7 +553,7 @@ class CoreDotGame(EventEmitter):
         """Resets the game"""
         self._score = 0
         self.grid.fill()
-        self.update_score_on_activate(())
+        self.emit('reset')
         self.set_moves(self._init_moves)
 
     def get_score(self):
@@ -706,22 +609,30 @@ class CoreDotGame(EventEmitter):
     #
     #     return game
 
-    def update_score_on_activate(self, connected):
-        """Updates the score based upon the current dot & connected dots that
-        were joined to it
+    def add_positions_to_score(self, positions):
+        """Updates the score based upon the positions of all dots simultaneously activated
 
         Parameter:
-            connected (tuple<AbstractDot>): The dots that were joined connected
+            positions (list<tuple<int, int>>): The position of the dots to be scored
         """
-        for position in connected:
-            dot = self.grid[position].get_dot()
+        dots = (self.grid[position].get_dot() for position in positions)
+        self.add_dots_to_score(dots)
+
+    def add_dots_to_score(self, dots):
+        """Updates the score based upon dots
+
+        Parameter:
+            positions (list<AbstractDot>): The dots to be scored
+        """
+        dots = list(dot for dot in dots if dot)
+        for dot in dots:
             if dot:
                 self.objectives.increase_progress(dot, 1)
 
-        self._score += self.calculate_score(connected)
-        self.emit('activate', self._score)
+        self._score += self.calculate_score(dots)
 
-    def calculate_score(self, connected):  # pylint: disable=no-self-use
+    @staticmethod
+    def calculate_score(connected):
         """(int) Calculates & returns the score for a list of connected positions
         
         Parameters:
@@ -729,22 +640,199 @@ class CoreDotGame(EventEmitter):
         """
         return len(connected)
 
-    def animate(self):
-        """Drops dots through the grid and animates
+    def activate_selected(self):
+        """Activates all in current selection (see activate_all)
         
         Yield:
-            (str|None): Once for each step of the animation
+            str: step name for each step in the resulting animation
         """
-        yield from self.grid.replace_blanks()
 
-        yield "DONE"
+        to_activate = set(self._connected)
+        has_loop = len(to_activate) < len(self._connected)
 
+        if len(to_activate) < self.min_group:
+            self._connected = []
+            return
+
+        if self._moves > 0:
+            self._moves -= 1
+
+        self._resolving = True
+
+        if has_loop:
+            # if inner:
+            #     score
+            #     convert all to bombs
+
+            dot_type = self.get_connection_kind()
+
+            for position, cell in self.grid.items():
+                if cell.get_dot() and cell.get_dot().get_kind() == dot_type:
+                    to_activate.add(position)
+
+        yield "ACTIVATE_SELECTED"
+
+        yield from self.activate_all(to_activate, has_loop=has_loop)
+
+    # This should be refactored, but doing so would increase the high-level
+    # complexity of the game class, so for now it is sufficient
+    # pylint: disable=too-many-nested-blocks,too-many-branches
+    def activate_all(self, to_activate, has_loop=False):
+        """Processes activate hook for all dots to be activated, and 
+        adjacent_activated hook for all adjacent dots
+        
+        Parameters:
+            to_activate (set<tuple<int, int>>): Set of grid positions containing dots to be activated
+            has_loop (bool): Flag passed on to relevant hooks (activate & adjacent_activated)
+        
+        Yield:
+            str: step name for each step in the resulting animation
+        """
+
+        if not isinstance(to_activate, set):
+            to_activate = set(to_activate)
+
+        self._resolving = True
+
+        activated = set()
+        activated_adjacent = set()
+
+        # get adjacent cells to to_activate
+        #  len(to_activate /\ to_activate_adjacent) == 0
+        to_activate_adjacent = set()
+        for position in to_activate:
+            for neighbour in self.grid.get_adjacent_cells(position):
+                if neighbour not in to_activate:
+                    to_activate_adjacent.add(neighbour)
+
+        # activate all appropriately
+
+        yield "ACTIVATE_ALL"
+
+        while True:
+            if len(to_activate):
+                position = to_activate.pop()
+                dot = self.grid[position].get_dot()
+                if not dot:
+                    # print(f"No dot for {position}")
+                    continue
+
+                extra_positions = dot.activate(position, self, to_activate, has_loop=has_loop)
+
+                activated.add(position)
+
+            elif len(to_activate_adjacent):
+                position = to_activate_adjacent.pop()
+                dot = self.grid[position].get_dot()
+                if not dot:
+                    # print(f"No dot for {position}")
+                    continue
+
+                activated_neighbours = list(
+                    neighbour for neighbour in self.grid.get_adjacent_cells(position) if neighbour in to_activate)
+
+                extra_positions = dot.adjacent_activated(position, self, to_activate,
+                                                         activated_neighbours, has_loop=has_loop)
+
+                activated_adjacent.add(position)
+
+            else:
+                break
+
+            if extra_positions:
+                for extra_position in extra_positions:
+                    if extra_position not in activated:
+                        to_activate.add(extra_position)
+
+                        for neighbour in self.grid.get_adjacent_cells(extra_position):
+                            if neighbour in activated_adjacent or neighbour in to_activate or neighbour in activated:
+                                continue
+
+                            to_activate_adjacent.add(neighbour)
+
+                        yield "ACTIVATE"
+
+        self.add_positions_to_score(activated)
+
+        for position in activated:
+            self.grid[position].set_dot(None)
         self._connected = []
 
-        self._resolving = False
-        self.emit('complete')
+        yield "ANIMATION_BEGIN"
 
-    def drop(self, callback=lambda: None):
+        for _ in self.grid.replace_blanks():
+            yield "ANIMATION_STEP"
+
+        yield "ANIMATION_DONE"
+
+        self._resolving = False
+
+        to_activate = self.after_resolve()
+
+        # TODO: convert to non-recursive
+        if to_activate:
+            print('More cells to activate')
+            yield from self.activate_all(to_activate)
+        else:
+            print('No more to activate')
+
+            self.emit('complete')
+            return
+
+    def after_resolve(self):
+        """Processes after_resolve hook for all dots on the grid, highest priority first
+        
+        Return:
+            set(tuple<int, int>): A set of grid positions for all dots that need to be activated
+        """
+        priorities = {}
+
+        for position, cell in self.grid.items():
+            dot = cell.get_dot()
+
+            if not dot:
+                continue
+
+            priority = dot.PRIORITY
+
+            if priority not in priorities:
+                priorities[priority] = [position]
+            else:
+                priorities[priority].append(position)
+
+        positions_by_priority = sorted(priorities.items(), reverse=True)
+
+        after_resolved_dots = set()
+
+        for priority, positions in positions_by_priority:
+            to_activate = set()
+
+            removed = set()
+
+            for position in positions:
+                cell = self.grid[position]
+                dot = cell.get_dot()
+                if not dot or id(dot) in after_resolved_dots:
+                    continue
+
+                after_resolved_dots.add(id(dot))
+
+                extra_positions = dot.after_resolved(position, self)
+
+                if not cell.get_dot():
+                    print(f'Removed {position}')
+                    removed.add(position)
+
+                if extra_positions:
+                    to_activate.update(extra_positions)
+
+            if removed:
+                self.add_positions_to_score(removed)
+
+            if to_activate:
+                return to_activate
+
+    def drop(self):
         """Drops and returns the current connections
         
         Parameters:
@@ -755,69 +843,12 @@ class CoreDotGame(EventEmitter):
             has finished
         """
 
-        # TODO: review
-        dropped = self._connected
-
-        if len(dropped) < self.min_group:
-            self._connected = []
-            return
-
-        if self.has_loop():
-            # TODO: generalise this logic so that it can work for wildcards
-            dot_type = self.grid[dropped[0]].get_dot().get_kind()
-
-            for position, cell in self.grid.items():
-                if cell.get_dot() and cell.get_dot().get_kind() == dot_type:
-                    dropped.append(position)
-
-        self.set_moves(self._moves - 1)
-
-        connected_set = set(dropped)
-
-        # activations
-        for position in dropped:
-            self.grid[position].get_dot().activate(position, self, dropped)
-
-        # adjacent activations
-        for position in self.grid:
-            neighbours = list(neighbour for neighbour in self.grid.get_adjacent_cells(position) if neighbour in connected_set)
-
-            if not neighbours:
-                continue
-
-            dot = self.grid[position].get_dot()
-
-            if dot:
-                removed = dot.adjacent_activated(position, self, dropped, neighbours)
-
-                if removed:
-                    for neighbour in removed:
-                        if self.grid[neighbour].get_dot():
-                            dropped.append(neighbour)
-
-        self.update_score_on_activate(dropped)
-
-        for position in dropped:
-            self.grid[position].set_dot(None)
-
-        self.emit('animate', callback)
+        return self.activate_selected()
 
     def remove(self, *positions, callback=lambda: None):
-        """Attempts to remove the dot(s) at the given positions
+        """Attempts to remove the dot(s) at the given positions"""
 
-        Parameters:
-            *positions (tuple<int, int>): The position(s) to remove
-            callback (callable): Callback to be called when animation is complete
-
-        Yield:
-            Yields None for each frame of drops and "DONE" when the dropping
-            has finished
-        """
-
-        for position in positions:
-            self.grid[position].set_dot(None)
-
-        self.emit('animate', callback)
+        raise NotImplementedError("Deprecated as of 1.1.0")
 
 
 class DotGame(CoreDotGame):
@@ -825,6 +856,7 @@ class DotGame(CoreDotGame):
 
     Join dots together to activate & remove them
     Join dots in a loop to activate & remove all dots of that kind"""
+
     def __init__(self, dot_weights, kinds=(1, 2, 3), size=(6, 6), dead_cells=None,
                  objectives: ObjectiveManager = None, min_group=2, moves=20, animation=True):
         """Constructor
@@ -845,10 +877,27 @@ class DotGame(CoreDotGame):
         self.kind_selector = WeightedSelector.from_equals(set(kinds))
 
         dot_selector = WeightedSelector(dot_weights)
-        dot_factory = WeightedFactory(self.kind_selector, dot_selector)
+        dot_factory = DotFactory(self.kind_selector, dot_selector)
 
         super().__init__(dot_factory, size=size, dead_cells=dead_cells, objectives=objectives, min_group=min_group,
                          moves=20, animation=animation)
 
+class CompanionGame(DotGame):
+    """Simple game of Dots & Co, with a Companion
 
+    Join dots together to activate & remove them
+    Join dots in a loop to activate & remove all dots of that kind
+    Activate companion dots to charge your companion
+    """
 
+    def __init__(self, dot_weights, companion: AbstractCompanion, kinds=(1, 2, 3), size=(6, 6), dead_cells=None,
+                 objectives: ObjectiveManager = None, min_group=2, moves=20, animation=True):
+        self.companion = companion
+
+        super().__init__(dot_weights, kinds=kinds, size=size, dead_cells=dead_cells, objectives=objectives,
+                         min_group=min_group, moves=moves, animation=animation)
+
+    def reset(self):
+        """Resets the game"""
+        self.companion.reset()
+        super().reset()
