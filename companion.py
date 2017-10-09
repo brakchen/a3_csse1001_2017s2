@@ -3,14 +3,20 @@
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.0.0rc3"
+__version__ = "1.1.1"
 
 
 class AbstractCompanion:
     """Abstract representation of a companion"""
     NAME = 'abstract'
+    _charge = None  # initialised in reset
 
     def __init__(self, max_charge=6):
+        """Constructor
+        
+        Parameters:
+            max_charge (int): The amount of charge required to activate the companion
+        """
         self.reset()
         self._max_charge = max_charge
 
@@ -51,6 +57,14 @@ class AbstractCompanion:
 
         Parameters:
             game (DotGame): The game being player
+            
+        Yield:
+            None: Once for each step in an animation
+            
+        Notes:
+            Typically, this method will return:
+                - game.activate_all(positions): If positions need to be activated
+                - None: If no animation needs to occur
         """
         raise NotImplementedError()
 

@@ -43,6 +43,8 @@ def load_image_pil(image_id, size, prefix, suffix='.png'):
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
 
+    print("image_id:{0}, size:{1}, prefix:{2}".format(image_id, size, prefix))
+
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return ImageTk.PhotoImage(Image.open(file_path))
@@ -58,6 +60,7 @@ def load_image_tk(image_id, size, prefix, suffix='.gif'):
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
 
+    print("image_id:{0}, size:{1}, prefix:{2}".format(image_id, size, prefix))
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return tk.PhotoImage(file=file_path)
@@ -85,12 +88,13 @@ class InfoPanel(tk.Frame):
         info_frame = tk.Frame(master)
         _turns_frame = tk.Frame(info_frame)
 
+
         companions_frame = tk.Frame(info_frame)
 
         self.dots_frame = Frame(info_frame)
 
         self._turns_label = tk.Label(_turns_frame,
-                                     text="", font=(None, 30))
+                                     text="jkhjjkhkjhs", font=(None, 30))
 
         # Set center image and score next to image
         self.image_register("useless.gif")
@@ -107,13 +111,18 @@ class InfoPanel(tk.Frame):
         self._turns_label.pack(anchor=tk.W, expand=False)
         self._useless_image.pack(side=tk.RIGHT)
 
+
     def set_turns(self, turn):
         self._turns_label.config(text="{}".format(turn))
+
 
     def get_image(self, imageId):
         return self._imgContainer.get(imageId, "Sorry Please register image first")
 
+    def set_image(self,imageId):
+        self._useless_image.config(image=imageId)
     def set_status(self, image_id, count, obj):
+
 
         self._status_label = tk.Label(self.dots_frame,
                                       image=image_id,
@@ -129,6 +138,7 @@ class InfoPanel(tk.Frame):
         self._useless_image.config(text="{}".format(score))
 
     def set_docts_step(self, obj):
+
         for num in range(len(self.dotsSerialize)):
             if obj[num][1] is not self.dotsSerialize[num][2]:
                 self.dotsSerialize[num][3].config(text=obj[num][1])
@@ -147,8 +157,19 @@ class InfoPanel(tk.Frame):
 
 class IntervalBar(tk.Canvas):
 
-    def __init__(self, master):
-        self._master = master
+
+    def __init__(self, master,displacement,numBar,x=(0,0)):
+        self.count=0
+        self.numBar=numBar
+        X1,X2=x
+        Y1=10
+        Y2=30
+        self.canvas_coordinate = [
+            (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
+            for num in range(0,numBar)
+        ]
+
+
         self._canvas = tk.Canvas(master, bg="white",
                                         width=500, height=30)
         self._canvas.pack(side=tk.TOP)
@@ -157,21 +178,43 @@ class IntervalBar(tk.Canvas):
 
 
     def draw_rectangle(self):
-        
-        self._canvas.create_rectangle(80, 10, 140, 30)
-        self._canvas.create_rectangle(140, 10, 200, 30)
-        self._canvas.create_rectangle(200, 10, 260, 30)
-        self._canvas.create_rectangle(260, 10, 320, 30)
-        self._canvas.create_rectangle(320, 10, 380, 30)
-        self._canvas.create_rectangle(380, 10, 440, 30)
-        
-    def fill_rectangle_blue(self, a, b, c, d):
-        self._canvas.create_rectangle(a, b, c, d, fill='blue')
+        for data in self.canvas_coordinate:
+            x,y,h,l=data
+            self._canvas.create_rectangle(x,y,h,l)
 
-    def fill_rectangle_blank(self, a, b, c, d):
-         
-        self._canvas.create_rectangle(a, b, c, d, fill='white')
-        
+
+    def fill_rectangle_blue(self, data):
+        x, y, h, l = data
+        self._canvas.create_rectangle(x,y,h,l, fill='blue')
+
+    def fill_rectangle_blank(self,data):
+        for data in data:
+            x, y, h, l = data
+            self._canvas.create_rectangle(x, y, h, l, fill='white')
+
+    def config_progress(self):
+        if self.count<self.numBar:
+            self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
+            self.count += 1
+        else:
+            self.count=0
+            self.fill_rectangle_blank(self.canvas_coordinate)
+
+
+class AnchorDot(BasicDot):
+    DOT_NAME = "anchor"
+
+    def activate(self, position, game, activated):
+        pass
+
+    def adjacent_activated(self, position, game, activated, activated_neighbours):
+        pass
+
+    def get_view_id(self):
+        """(str) Returns a string to identify the image for this dot"""
+        return "{}/{}".format(self.get_name(), self.get_kind())
+
+
 class CompanionDot(BasicDot):
     DOT_NAME = "companion"
 
@@ -183,6 +226,7 @@ class CompanionDot(BasicDot):
 
     def get_view_id(self):
         """(str) Returns a string to identify the image for this dot"""
+
         return "{}/{}".format(self.get_name(), + self.get_kind())
 
 
@@ -195,37 +239,72 @@ class DotsApp(object):
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
+
         self._master = master
         master.title("Dots & Co")
         # self define
         self._info_panel = InfoPanel(master)
-        self._interval_bar = IntervalBar(master)
+
+
+        self._interval_bar = IntervalBar(master,60,6,(80,80))
+
+
         self._menu(master)
 
         self._playing = True
         self._image_manager = ImageManager('images/dots/', loader=load_image)
 
+
+
         self._turns = 20
-        self._coordinate = -1
         # Games
-        counts = [10, 15, 25, 25,10, 15, 25, 25]
+        counts = [10, 15, 25, 25]
         random.shuffle(counts)
         # randomly pair counts with each kind of dot
-        objectives = zip([BasicDot(1), BasicDot(2), BasicDot(3), BasicDot(4),CompanionDot(1),CompanionDot(2),CompanionDot(3),CompanionDot(4)], counts)
+        objectives = zip([BasicDot(1),
+                          BasicDot(2),
+                          BasicDot(3),
+                          BasicDot(4),], counts)
+        # objectives = zip([AnchorDot("anchor"),
+        #                   AnchorDot("anchor"),
+        #                   AnchorDot("anchor"),
+        #                   AnchorDot("anchor"),
+        #                   ], counts)
         self._objectives = ObjectiveManager(objectives)
 
+
         # --------------------------------------------------------------------------------------
-        self._objectivesView = ObjectivesView(master, image_manager=self._image_manager)
+        self._objectivesView = ObjectivesView(master,
+                                              image_manager=self._image_manager)
+
         for data in self._objectives.get_status():
-            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)), data[1], data[0])
+            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
+                                        data[1],
+                                        data[0])
 
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
-        self._game = DotGame({BasicDot: 1,CompanionDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
+        # self._game = DotGame({BasicDot: 1,AnchorDot:1},
+        #                      objectives=self._objectives,
+        #                      kinds=(1, 2, 3, 4,"anchor"),
+        #                      size=(8, 8),
+        #                      dead_cells=dead_cells)
+
+        self._game = DotGame({BasicDot:1},
+                             objectives=self._objectives,
+                             kinds={1,2,3,4},
+                             size=(8, 8),
                              dead_cells=dead_cells)
+
+        #
+        # self._game = DotGame({AnchorDot:1,},
+        #                      objectives=self._objectives,
+        #                      kinds=("anchor","anchor","anchor","anchor"),
+        #                      size=(8, 8),
+        #                      dead_cells=dead_cells)
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
@@ -235,9 +314,10 @@ class DotsApp(object):
 
         # Events
         self.bind_events()
+        # self._game.remove((0,0))
+        # self._game.drop((0,0))
 
-        # Set initial score again to trigger view update automatically
-        self._score(self._game.get_score())
+
 
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
@@ -371,8 +451,11 @@ class DotsApp(object):
     def reset(self):
         """Resets the game"""
         self._game.reset()
+
         self._grid_view.draw(self._game.grid)
         self._info_panel.set_turns(20)
+        self._info_panel.set_image(self._info_panel.get_image("useless.gif"))
+
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -388,6 +471,7 @@ class DotsApp(object):
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
+
         pass
 
     def _score(self, score):  # pylint: disable=no-self-use
@@ -397,51 +481,43 @@ class DotsApp(object):
             score (int): The new score
         """
         self._info_panel.set_score(self._game.get_score())
+
         self._info_panel.set_docts_step(self._objectives.get_status())
         self._info_panel.set_turns(self._game.get_moves())
-        self.config_progress()
+        self._interval_bar.config_progress()
+        print(self._game.get_connection_path())
+
 
     def _menu(self, master):
-
         menubar = Menu(master)
         master.config(menu=menubar)
-        filemenu = Menu(menubar)
-        menubar.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New Game", command=self.reset)
-        filemenu.add_command(label="Exit", command=self.exit)
-        filemenu.add_command(label="Load companion game",
-                             command=self.load_game)
+
+
+        fileMenu = Menu(menubar)
+
+        submenu = Menu(fileMenu)
+        submenu.add_command(label="Companion",command=self.load_game)
+        submenu.add_command(label="No Companion",command=self.reset)
+        fileMenu.add_cascade(label='New Game', menu=submenu, underline=0)
+
+        fileMenu.add_separator()
+
+        fileMenu.add_command(label="Exit", underline=0, command=lambda :
+        self._master.destroy()
+        if askyesno('Verify', 'Do you really wanna quit?')
+        else showinfo('No', 'Welcome back'))
+
+        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
+
+
+
+
     def load_game(self):
-        pass
+        self.reset()
+        self._info_panel.image_register("penguin.gif")
+        self._info_panel.set_image(self._info_panel.get_image("penguin.gif"))
 
-    def exit(self):
-        if askyesno('Verify', 'Do you really wanna quit?'):
-            showwarning('Yes', "GG")
-            self._master.destroy()
-        else:
-            showinfo('No', 'Welcome back')
 
-    def config_progress(self):
-        
-        if self._coordinate == 5:
-            
-            self._interval_bar.fill_rectangle_blank(140, 10, 200, 30)
-            self._interval_bar.fill_rectangle_blank(200, 10, 260, 30)
-            self._interval_bar.fill_rectangle_blank(260, 10, 320, 30)
-            self._interval_bar.fill_rectangle_blank(320, 10, 380, 30)
-            self._interval_bar.fill_rectangle_blank(380, 10, 440, 30)
-            self._coordinate = -1
-            
-        canvas_coordinate = [(80, 10, 140, 30),
-                             (140, 10, 200, 30),
-                             (200, 10, 260, 30),
-                             (260, 10, 320, 30),
-                             (320, 10, 380, 30),
-                             (380, 10, 440, 30)]
-        
-        self._coordinate += 1
-        a,b,c,d = canvas_coordinate[self._coordinate]
-        self._interval_bar.fill_rectangle_blue(a,b,c,d)
 
 def main():
     """Sets-up the GUI for Dots & Co"""

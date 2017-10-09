@@ -26,7 +26,7 @@ from util import ImageManager
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.0.0rc3"
+__version__ = "1.1.1"
 
 class GridView(EventEmitter, tk.Canvas):
     """View component for grid in a game of Dots & Co
@@ -36,7 +36,7 @@ class GridView(EventEmitter, tk.Canvas):
     # The colour of each tile type
     COLOURS = {
         'blank': VIBRANT_COLOURS['cream'],
-        'None': VIBRANT_COLOURS['grey'],
+        None: VIBRANT_COLOURS['grey'],
         1: VIBRANT_COLOURS['red'],
         2: VIBRANT_COLOURS['blue'],
         3: VIBRANT_COLOURS['yellow'],
@@ -69,6 +69,10 @@ class GridView(EventEmitter, tk.Canvas):
             image_manager (ImageManager): An image manager (for caching, etc.)
             **kwargs: Any other keyword arguments for the Canvas constructor
         """
+
+        if image_manager is None:
+            raise ValueError("Parameter image_manager is required")
+
         # Set dimensions
         self.size = size
         self.dot_size = dot_size
@@ -350,10 +354,9 @@ class GridView(EventEmitter, tk.Canvas):
         size = ((bottom_right[0] - top_left[0]),
                 (bottom_right[1] - top_left[1]))
 
-        if dot is None:
+        if dot is None or dot.will_be_removed():
             if self._dots.get(position) is not None:
                 # Replace an image tile with a blank image
-                # TODO: review this
                 image = tk.PhotoImage()
                 self.itemconfig(self._dots[position], image=image)
             return
@@ -401,7 +404,11 @@ class ObjectivesView(GridView):
         """Draws all the cells in the grid at their corresponding position
 
         Parameters:
-            grid (DotGrid): A grid of cells
+            objectives (list<tuple<AbstractDot, int>>): 
+                    List of (objective, remaining) pairs, where remaining is the amount of progress
+                    remaining before the corresponding objective is reached
+                    
+                    (see return type of ObjectiveManager.get_status)
         """
         self.delete(tk.ALL)
         self._dots = {}
