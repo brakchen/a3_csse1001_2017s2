@@ -100,6 +100,6 @@ class BasicDot(AbstractDot):
 
     def get_view_id(self):
         """(str) Returns a string to identify the image for this dot"""
-        return "{}/{}".format(self.get_name(), + self.get_kind())
+        return "{}/{}".format(self.get_name(), self.get_kind())
 
 # To understand recursion, see the top of this file

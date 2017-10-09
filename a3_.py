@@ -6,21 +6,20 @@ Semester 2, 2017
 # There are a number of jesting comments in the support code
 # They should not be taken seriously. Keep it fun folks :D
 # Students are welcome to add their own source code humour, provided it remains civil
-from copy import copy
 from tkinter import *
 import tkinter as tk
 from tkinter.messagebox import *
 import os
 import random
 
+
 try:
     from PIL import ImageTk, Image
-
     HAS_PIL = True
 except:
     HAS_PIL = False
 
-from view import GridView, ObjectivesView
+from view import GridView
 from game import DotGame, ObjectiveManager
 from dot import BasicDot
 from util import create_animation, ImageManager
@@ -42,13 +41,9 @@ def load_image_pil(image_id, size, prefix, suffix='.png'):
         prefix (str): The prefix to prepend to the filepath (i.e. root directory
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
-
-    print("image_id:{0}, size:{1}, prefix:{2}".format(image_id, size, prefix))
-
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return ImageTk.PhotoImage(Image.open(file_path))
-
 
 def load_image_tk(image_id, size, prefix, suffix='.gif'):
     """Returns a tkinter photo image
@@ -59,167 +54,45 @@ def load_image_tk(image_id, size, prefix, suffix='.gif'):
         prefix (str): The prefix to prepend to the filepath (i.e. root directory
         suffix (str): The suffix to append to the filepath (i.e. file extension)
     """
-
-    print("image_id:{0}, size:{1}, prefix:{2}".format(image_id, size, prefix))
     width, height = size
     file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
     return tk.PhotoImage(file=file_path)
 
-
 # This allows you to simply load png images with PIL if you have it,
 # otherwise will default to gifs through tkinter directly
 load_image = load_image_pil if HAS_PIL else load_image_tk
-COMPANIONSMANAGER = {
-    "useless.gif": "images/companions/useless.gif",
-    "penguin.gif": "images/companions/penguin.gif",
-    "penguin.png": "images/companions/penguin.png",
-    "penguin_large.png": "images/companions/penguin_large.png",
-}
+
 
 
 # Define your classes here
 
 class InfoPanel(tk.Frame):
+
     def __init__(self, master):
-        self._imgContainer = {}
-        self.dotsSerialize = []
 
         self._master = master
         info_frame = tk.Frame(master)
-        _turns_frame = tk.Frame(info_frame)
+        info_frame.pack(side=tk.TOP, fill=tk.X)
+        
+        self._score_label = tk.Label(info_frame, text="0", font=(None, 50))
+        self._score_label.pack(side=tk.LEFT)
+        
+        self.set_image(info_frame)
 
-        companions_frame = tk.Frame(info_frame)
-
-        self.dots_frame = Frame(info_frame)
-
-        self._turns_label = tk.Label(_turns_frame,
-                                     text="", font=(None, 30))
-
-        # Set center image and score next to image
-        self.image_register("useless.gif")
-        self._useless_image = tk.Label(companions_frame, text="0",
-                                       font=(None, 40),
-                                       image=self.get_image("useless.gif"),
-                                       compound="right")
-        # Packing all the frames
-        info_frame.pack()
-        _turns_frame.pack(side=tk.LEFT, ipadx=50)
-        companions_frame.pack(side=tk.LEFT, expand=True)
-        self.dots_frame.pack(side=tk.LEFT, expand=True)
-        self._turns_label.pack(anchor=tk.W, expand=False)
-        self._useless_image.pack(side=tk.RIGHT)
-
-    def set_turns(self, turn):
-        self._turns_label.config(text="{}".format(turn))
-
-    def get_image(self, imageId):
-        return self._imgContainer.get(imageId, "Sorry Please register image first")
-
-    def set_image(self,imageId):
-        self._useless_image.config(image=imageId)
-    def set_status(self, image_id, count, obj):
-
-        self._status_label = tk.Label(self.dots_frame,
-                                      image=image_id,
-                                      text=count, compound="top")
-        self._status_label.pack(side=tk.RIGHT)
-
-        self.dotsSerialize.append([obj.get_kind(),
-                                   obj.get_name(),
-                                   count,
-                                   self._status_label])
-
-
+        self._objective_label = tk.Label(info_frame, text="")
+        self._objective_label.pack(side=tk.RIGHT)
+        
+    def set_image(self, info_frame):
+        filename = r"images/companions/useless.gif"
+        self._img = PhotoImage(file=filename)
+        img_label = tk.Label(info_frame, text=None, image=self._img)
+        img_label.pack(side=tk.TOP)
+        
+    def set_status(self, status):
+        self._objective_label.config(text="{}".format(status))
+        
     def set_score(self, score):
-        self._useless_image.config(text="{}".format(score))
-
-    def set_docts_step(self, obj):
-
-        for num in range(len(self.dotsSerialize)):
-            if obj[num][1] is not self.dotsSerialize[num][2]:
-                self.dotsSerialize[num][3].config(text=obj[num][1])
-                self.dotsSerialize[num][2] = obj[num][1]
-
-    # functionality
-    def image_register(self, imageId=None, load_all=False):
-        if imageId is None and not load_all:
-            raise KeyError("Sorry image id is important")
-        else:
-            if load_all:
-                for id, path in COMPANIONSMANAGER:
-                    self._imgContainer[id] = PhotoImage(file=COMPANIONSMANAGER[path])
-            else:
-                self._imgContainer[imageId] = PhotoImage(file=COMPANIONSMANAGER[imageId])
-
-class IntervalBar(tk.Canvas):
-
-    def __init__(self, master,displacement,numBar,x=(0,0)):
-        self.count=0
-        self.numBar=numBar
-        X1,X2=x
-        Y1=10
-        Y2=30
-        self.canvas_coordinate = [
-            (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
-            for num in range(0,numBar)
-        ]
-
-        self._canvas = tk.Canvas(master, bg="white",
-                                        width=500, height=30)
-        self._canvas.pack(side=tk.TOP)
-
-        self.draw_rectangle()
-
-
-    def draw_rectangle(self):
-        for data in self.canvas_coordinate:
-            x,y,h,l=data
-            self._canvas.create_rectangle(x,y,h,l)
-
-
-    def fill_rectangle_blue(self, data):
-        x, y, h, l = data
-        self._canvas.create_rectangle(x,y,h,l, fill='blue')
-
-    def fill_rectangle_blank(self,data):
-        for data in data:
-            x, y, h, l = data
-            self._canvas.create_rectangle(x, y, h, l, fill='white')
-
-    def config_progress(self):
-        if self.count<self.numBar:
-            self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
-            self.count += 1
-        else:
-            self.count=0
-            self.fill_rectangle_blank(self.canvas_coordinate)
-
-
-class AnchorDot(BasicDot):
-    DOT_NAME = "anchor"
-
-    def activate(self, position, game, activated):
-        pass
-
-    def adjacent_activated(self, position, game, activated, activated_neighbours):
-        pass
-
-    def get_view_id(self):
-        """(str) Returns a string to identify the image for this dot"""
-        return "{}/{}".format(self.get_name(), self.get_kind())
-
-class CompanionDot(BasicDot):
-    DOT_NAME = "companion"
-
-    def activate(self, position, game, activated):
-        pass
-
-    def adjacent_activated(self, position, game, activated, activated_neighbours):
-        pass
-
-    def get_view_id(self):
-        """(str) Returns a string to identify the image for this dot"""
-        return "{}/{}".format(self.get_name(), self.get_kind())
+        self._score_label.config(text="{}".format(score))
 
 
 
@@ -232,69 +105,31 @@ class DotsApp(object):
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
-
         self._master = master
         master.title("Dots & Co")
-        # self define
         self._info_panel = InfoPanel(master)
-
-        self._interval_bar = IntervalBar(master,60,6,(80,80))
-
-        self._menu(master)
-
+        
         self._playing = True
+
         self._image_manager = ImageManager('images/dots/', loader=load_image)
-
-
-        self._turns = 20
-        # Games
+        self._menu(master)
+        
+        # Game
         counts = [10, 15, 25, 25]
         random.shuffle(counts)
         # randomly pair counts with each kind of dot
-        objectives = zip([BasicDot(1),
-                          BasicDot(2),
-                          BasicDot(3),
-                          BasicDot(4),], counts)
-        # objectives = zip([AnchorDot("anchor"),
-        #                   AnchorDot("anchor"),
-        #                   AnchorDot("anchor"),
-        #                   AnchorDot("anchor"),
-        #                   ], counts)
+        objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
+
         self._objectives = ObjectiveManager(objectives)
 
-        # --------------------------------------------------------------------------------------
-        self._objectivesView = ObjectivesView(master,
-                                              image_manager=self._image_manager)
-
-        for data in self._objectives.get_status():
-            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
-                                        data[1],
-                                        data[0])
-
-
+##        self._info_panel.set_status(self._objectives.get_status())
+        # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
-
-        # self._game = DotGame({BasicDot: 1,AnchorDot:1},
-        #                      objectives=self._objectives,
-        #                      kinds=(1, 2, 3, 4,"anchor"),
-        #                      size=(8, 8),
-        #                      dead_cells=dead_cells)
-
-        self._game = DotGame({BasicDot:1},
-                             objectives=self._objectives,
-                             kinds={1,2,3,4},
-                             size=(8, 8),
+        self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
                              dead_cells=dead_cells)
-
-        #
-        # self._game = DotGame({AnchorDot:1,},
-        #                      objectives=self._objectives,
-        #                      kinds=("anchor","anchor","anchor","anchor"),
-        #                      size=(8, 8),
-        #                      dead_cells=dead_cells)
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
@@ -304,9 +139,9 @@ class DotsApp(object):
 
         # Events
         self.bind_events()
-        # self._game.remove((0,0))
-        # self._game.drop((0,0))
 
+        # Set initial score again to trigger view update automatically
+        self._score(self._game.get_score())
 
 
     def draw_grid_borders(self):
@@ -352,7 +187,6 @@ class DotsApp(object):
             position (tuple<int, int>): The position where the connection was
                                         dropped
         """
-
         if not self._playing:
             return
 
@@ -371,10 +205,8 @@ class DotsApp(object):
             start (tuple<int, int>): The position of the starting dot
             end (tuple<int, int>): The position of the ending dot
         """
-        # print("start:{start}----end:{end}".format(start=start,end=end))
         self._grid_view.draw_connection(start, end,
                                         self._game.grid[start].get_dot().get_kind())
-
 
     def _undo(self, positions):
         """Removes all the given dot connections from the grid view
@@ -424,7 +256,6 @@ class DotsApp(object):
         Raises:
             IndexError: If position cannot be activated
         """
-
         if len(positions) is None:
             return
 
@@ -441,12 +272,7 @@ class DotsApp(object):
 
     def reset(self):
         """Resets the game"""
-
-        self._game.reset()
-        self._grid_view.draw(self._game.grid)
-        self._info_panel.set_turns(20)
-        self._info_panel.set_image(self._info_panel.get_image("useless.gif"))
-
+        self.self_objectives.reset()
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -462,9 +288,8 @@ class DotsApp(object):
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-
-        pass
-
+        # Need to check whether the game is over
+        #raise NotImplementedError()  # no mercy for stooges
 
     def _score(self, score):  # pylint: disable=no-self-use
         """Handles change in score
@@ -474,45 +299,45 @@ class DotsApp(object):
         """
         self._info_panel.set_score(self._game.get_score())
 
-        self._info_panel.set_docts_step(self._objectives.get_status())
-        self._info_panel.set_turns(self._game.get_moves())
-        self._interval_bar.config_progress()
-        print(self._game.get_connection_path())
-
-
     def _menu(self, master):
+        
         menubar = Menu(master)
         master.config(menu=menubar)
-
-        fileMenu = Menu(menubar)
-
-        submenu = Menu(fileMenu)
-        submenu.add_command(label="Companion",command=self.load_game)
-        submenu.add_command(label="No Companion",command=self.reset)
-        fileMenu.add_cascade(label='New Game', menu=submenu, underline=0)
-
-        fileMenu.add_separator()
-
-        fileMenu.add_command(label="Exit", underline=0, command=lambda :
-        self._master.destroy()
-        if askyesno('Verify', 'Do you really wanna quit?')
-        else showinfo('No', 'Welcome back'))
-
-        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
-
-
-
-
-    def load_game(self):
-        self.reset()
-        self._info_panel.image_register("penguin.gif")
-        self._info_panel.set_image(self._info_panel.get_image("penguin.gif"))
-
-
-
-
-
-
+        filemenu = Menu(menubar)
+        menubar.add_cascade(label="File", menu=filemenu)
+        filemenu.add_command(label="New Game", command=self.reset)
+        filemenu.add_command(label="Exit", command=self.exit)
+                                     
+        
+        
+    def exit(self):
+        if askyesno('Verify', 'Do you really wanna quit?'):
+            showwarning('Yes', "GG")
+            self._master.destroy()
+        else:
+            showinfo('No', 'Welcome back')
+                                     
+                                     
+        
+        
+            
+##        dots1 = r'images/1.gif'
+##        dots2 = r'images/2.gif'
+##        dots3 = r'images/3.gif'
+##        dots4 = r'images/4.gif'
+##        self._dots1 = PhotoImage(file=dots1)
+##        self._dots2 = PhotoImage(file=dots2)
+##        self._dots3 = PhotoImage(file=dots3)
+##        self._dots4 = PhotoImage(file=dots4)
+##        
+##        dots_label1 = tk.Label(info_frame, text="25", compound='top', image=self._dots1)
+##        dots_label1.pack(side=tk.RIGHT)
+##        dots_label2 = tk.Label(info_frame, text="25", compound='top', image=self._dots2)
+##        dots_label2.pack(side=tk.RIGHT)
+##        dots_label3 = tk.Label(info_frame, text="10", compound='top', image=self._dots3)
+##        dots_label3.pack(side=tk.RIGHT)
+##        dots_label4 = tk.Label(info_frame, text="15", compound='top', image=self._dots4)
+##        dots_label4.pack(side=tk.RIGHT)
 def main():
     """Sets-up the GUI for Dots & Co"""
     root = tk.Tk()

@@ -450,7 +450,7 @@ class ObjectiveManager:
     def reset(self):
         """Resets the objective progress"""
         self.status = [list(objective) for objective in self._objectives]
-
+    #如果目标达成就用这个
     def is_complete(self):
         """(bool) Returns True iff all objectives have been reached"""
         return all(objective[1] == 0 for objective in self.status)
