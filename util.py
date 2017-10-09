@@ -3,31 +3,33 @@
 __author__ = "Benjamin Martin"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.0.0rc3"
+__version__ = "1.1.1"
 
 
-def create_animation(widget, generator, delay=200, func=None, callback=None):
+def create_animation(widget, generator, delay=200, delays=None, step=None, callback=None):
     """Creates a function which loops through a generator using the tkinter
     after method to allow for animations to occur
 
     Parameters:
         widget (tk.Widget): A tkinter widget (that has a .after method)
         generator (generator): The generator yielding animation steps
-        delay (int): The delay (in milliseconds) between steps
-        func (func): The function to call after each step
-        callback (func): The function to call after all steps
+        delay (int): The default delay (in milliseconds) between steps
+        delays (dict<str, int>): A map of specific delays for specific types of steps 
+        step (callable): The function to call after each step
+                         Accepts (step_type:str) as only argument
+        callback (callable): The function to call after all steps
 
     Return:
-        func: The animation runner function
+        (callable): The animation runner function
     """
 
     def runner():
         """Runs animation"""
         try:
-            next(generator)
-            widget.after(delay, runner)
-            if func is not None:
-                func()
+            step_type = next(generator)
+            widget.after(delays.get(step_type, delay), runner)
+            if step is not None:
+                step(step_type)
         except StopIteration:
             if callback is not None:
                 callback()
