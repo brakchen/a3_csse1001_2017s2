@@ -129,6 +129,7 @@ class InfoPanel(tk.Frame):
         self._useless_image.config(text="{}".format(score))
 
     def set_docts_step(self, obj):
+
         for num in range(len(self.dotsSerialize)):
             if obj[num][1] is not self.dotsSerialize[num][2]:
                 self.dotsSerialize[num][3].config(text=obj[num][1])
@@ -147,8 +148,17 @@ class InfoPanel(tk.Frame):
 
 class IntervalBar(tk.Canvas):
 
-    def __init__(self, master):
-        self._master = master
+    def __init__(self, master,displacement,numBar,x=(0,0)):
+        self.count=0
+        self.numBar=numBar
+        X1,X2=x
+        Y1=10
+        Y2=30
+        self.canvas_coordinate = [
+            (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
+            for num in range(0,numBar)
+        ]
+
         self._canvas = tk.Canvas(master, bg="white",
                                         width=500, height=30)
         self._canvas.pack(side=tk.TOP)
@@ -157,21 +167,28 @@ class IntervalBar(tk.Canvas):
 
 
     def draw_rectangle(self):
-        
-        self._canvas.create_rectangle(80, 10, 140, 30)
-        self._canvas.create_rectangle(140, 10, 200, 30)
-        self._canvas.create_rectangle(200, 10, 260, 30)
-        self._canvas.create_rectangle(260, 10, 320, 30)
-        self._canvas.create_rectangle(320, 10, 380, 30)
-        self._canvas.create_rectangle(380, 10, 440, 30)
-        
-    def fill_rectangle_blue(self, a, b, c, d):
-        self._canvas.create_rectangle(a, b, c, d, fill='blue')
+        for data in self.canvas_coordinate:
+            x,y,h,l=data
+            self._canvas.create_rectangle(x,y,h,l)
 
-    def fill_rectangle_blank(self, a, b, c, d):
-         
-        self._canvas.create_rectangle(a, b, c, d, fill='white')
-        
+
+    def fill_rectangle_blue(self, data):
+        x, y, h, l = data
+        self._canvas.create_rectangle(x,y,h,l, fill='blue')
+
+    def fill_rectangle_blank(self,data):
+        for data in data:
+            x, y, h, l = data
+            self._canvas.create_rectangle(x, y, h, l, fill='white')
+
+    def config_progress(self):
+        if self.count<self.numBar:
+            self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
+            self.count += 1
+        else:
+            self.count=0
+            self.fill_rectangle_blank(self.canvas_coordinate)
+
 class CompanionDot(BasicDot):
     DOT_NAME = "companion"
 
@@ -199,7 +216,7 @@ class DotsApp(object):
         master.title("Dots & Co")
         # self define
         self._info_panel = InfoPanel(master)
-        self._interval_bar = IntervalBar(master)
+        self._interval_bar = IntervalBar(master,60,6,(80,80))
         self._menu(master)
 
         self._playing = True
@@ -210,11 +227,13 @@ class DotsApp(object):
         # Games
         counts = [10, 15, 25, 25,10, 15, 25, 25]
         random.shuffle(counts)
+        
         # randomly pair counts with each kind of dot
-        objectives = zip([BasicDot(1), BasicDot(2), BasicDot(3), BasicDot(4),CompanionDot(1),CompanionDot(2),CompanionDot(3),CompanionDot(4)], counts)
+        objectives = zip([BasicDot(1), BasicDot(2), BasicDot(3), BasicDot(4),
+                          CompanionDot(1),CompanionDot(2),CompanionDot(3),CompanionDot(4)],
+                         counts)
         self._objectives = ObjectiveManager(objectives)
 
-        # --------------------------------------------------------------------------------------
         self._objectivesView = ObjectivesView(master, image_manager=self._image_manager)
         for data in self._objectives.get_status():
             self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)), data[1], data[0])
@@ -399,18 +418,18 @@ class DotsApp(object):
         self._info_panel.set_score(self._game.get_score())
         self._info_panel.set_docts_step(self._objectives.get_status())
         self._info_panel.set_turns(self._game.get_moves())
-        self.config_progress()
+        self._interval_bar.config_progress()
 
     def _menu(self, master):
 
         menubar = Menu(master)
         master.config(menu=menubar)
-        filemenu = Menu(menubar)
+        filemenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=filemenu)
         filemenu.add_command(label="New Game", command=self.reset)
         filemenu.add_command(label="Exit", command=self.exit)
-        filemenu.add_command(label="Load companion game",
-                             command=self.load_game)
+        filemenu.add_command(label="Loading Companion",
+                             command=self.load_game())
     def load_game(self):
         pass
 
@@ -421,27 +440,7 @@ class DotsApp(object):
         else:
             showinfo('No', 'Welcome back')
 
-    def config_progress(self):
-        
-        if self._coordinate == 5:
-            
-            self._interval_bar.fill_rectangle_blank(140, 10, 200, 30)
-            self._interval_bar.fill_rectangle_blank(200, 10, 260, 30)
-            self._interval_bar.fill_rectangle_blank(260, 10, 320, 30)
-            self._interval_bar.fill_rectangle_blank(320, 10, 380, 30)
-            self._interval_bar.fill_rectangle_blank(380, 10, 440, 30)
-            self._coordinate = -1
-            
-        canvas_coordinate = [(80, 10, 140, 30),
-                             (140, 10, 200, 30),
-                             (200, 10, 260, 30),
-                             (260, 10, 320, 30),
-                             (320, 10, 380, 30),
-                             (380, 10, 440, 30)]
-        
-        self._coordinate += 1
-        a,b,c,d = canvas_coordinate[self._coordinate]
-        self._interval_bar.fill_rectangle_blue(a,b,c,d)
+
 
 def main():
     """Sets-up the GUI for Dots & Co"""
