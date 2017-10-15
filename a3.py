@@ -8,16 +8,16 @@ Semester 2, 2017
 # Students are welcome to add their own source code humour, provided it remains civil
 
 import tkinter as tk
-from tkinter.messagebox import showinfo
+from tkinter.messagebox import showinfo, askyesno
 import os
 import random
 
 try:
-	from PIL import ImageTk, Image
+    from PIL import ImageTk, Image
 
-	HAS_PIL = True
+    HAS_PIL = True
 except ImportError:
-	HAS_PIL = False
+    HAS_PIL = False
 
 from view import GridView, ObjectivesView
 from game import DotGame, ObjectiveManager
@@ -33,31 +33,31 @@ __version__ = "1.1.1"
 
 
 def load_image_pil(image_id, size, prefix, suffix='.png'):
-	"""Returns a tkinter photo image
+    """Returns a tkinter photo image
 
-	Parameters:
-		image_id (str): The filename identifier of the image
-		size (tuple<int, int>): The size of the image to load
-		prefix (str): The prefix to prepend to the filepath (i.e. root directory
-		suffix (str): The suffix to append to the filepath (i.e. file extension)
-	"""
-	width, height = size
-	file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
-	return ImageTk.PhotoImage(Image.open(file_path))
+    Parameters:
+        image_id (str): The filename identifier of the image
+        size (tuple<int, int>): The size of the image to load
+        prefix (str): The prefix to prepend to the filepath (i.e. root directory
+        suffix (str): The suffix to append to the filepath (i.e. file extension)
+    """
+    width, height = size
+    file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
+    return ImageTk.PhotoImage(Image.open(file_path))
 
 
 def load_image_tk(image_id, size, prefix, suffix='.gif'):
-	"""Returns a tkinter photo image
+    """Returns a tkinter photo image
 
-	Parameters:
-		image_id (str): The filename identifier of the image
-		size (tuple<int, int>): The size of the image to load
-		prefix (str): The prefix to prepend to the filepath (i.e. root directory
-		suffix (str): The suffix to append to the filepath (i.e. file extension)
-	"""
-	width, height = size
-	file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
-	return tk.PhotoImage(file=file_path)
+    Parameters:
+        image_id (str): The filename identifier of the image
+        size (tuple<int, int>): The size of the image to load
+        prefix (str): The prefix to prepend to the filepath (i.e. root directory
+        suffix (str): The suffix to append to the filepath (i.e. file extension)
+    """
+    width, height = size
+    file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
+    return tk.PhotoImage(file=file_path)
 
 
 # This allows you to simply load png images with PIL if you have it,
@@ -66,143 +66,143 @@ load_image = load_image_pil if HAS_PIL else load_image_tk  # pylint: disable=inv
 
 DEFAULT_ANIMATION_DELAY = 0  # (ms)
 ANIMATION_DELAYS = {
-	# step_name => delay (ms)
-	'ACTIVATE_ALL': 50,
-	'ACTIVATE': 100,
-	'ANIMATION_BEGIN': 300,
-	'ANIMATION_DONE': 0,
-	'ANIMATION_STEP': 200
+    # step_name => delay (ms)
+    'ACTIVATE_ALL': 50,
+    'ACTIVATE': 100,
+    'ANIMATION_BEGIN': 300,
+    'ANIMATION_DONE': 0,
+    'ANIMATION_STEP': 200
 }
 COMPANIONSMANAGER = {
-	"useless.gif": "images/companions/useless.gif",
-	"penguin.gif": "images/companions/penguin.gif",
-	"penguin.png": "images/companions/penguin.png",
-	"penguin_large.png": "images/companions/penguin_large.png",
+    "useless.gif": "images/companions/useless.gif",
+    "penguin.gif": "images/companions/penguin.gif",
+    "penguin.png": "images/companions/penguin.png",
+    "penguin_large.png": "images/companions/penguin_large.png",
 }
 
 # Define your classes here
 
 class InfoPanel(tk.Frame):
-	def __init__(self, master):
-		self._imgContainer = {}
-		self.dotsSerialize = []
-		info_frame = tk.Frame(master)
-		_turns_frame = tk.Frame(info_frame)
+    def __init__(self, master):
+        self._imgContainer = {}
+        self.dotsSerialize = []
+        info_frame = tk.Frame(master)
+        _turns_frame = tk.Frame(info_frame)
 
 
-		companions_frame = tk.Frame(info_frame)
+        companions_frame = tk.Frame(info_frame)
 
-		self.dots_frame = tk.Frame(info_frame)
+        self.dots_frame = tk.Frame(info_frame)
 
-		self._turns_label = tk.Label(_turns_frame,
-									 text="jkhjjkhkjhs", font=(None, 30))
+        self._turns_label = tk.Label(_turns_frame,
+                                     text="jkhjjkhkjhs", font=(None, 30))
 
-		# Set center image and score next to image
-		self.image_register("useless.gif")
-		self._useless_image = tk.Label(companions_frame, text="",
-									   font=(None, 40),
-									   image=self.get_image("useless.gif"),
-									   compound="right")
-
-
-		# Packing all the frames
-		info_frame.pack()
-		_turns_frame.pack(side=tk.LEFT, ipadx=50)
-		companions_frame.pack(side=tk.LEFT, expand=True)
-		self.dots_frame.pack(side=tk.LEFT, expand=True)
-		self._turns_label.pack(anchor=tk.W, expand=False)
-		self._useless_image.pack(side=tk.RIGHT)
+        # Set center image and score next to image
+        self.image_register("useless.gif")
+        self._useless_image = tk.Label(companions_frame, text="",
+                                       font=(None, 40),
+                                       image=self.get_image("useless.gif"),
+                                       compound="right")
 
 
+        # Packing all the frames
+        info_frame.pack()
+        _turns_frame.pack(side=tk.LEFT, ipadx=50)
+        companions_frame.pack(side=tk.LEFT, expand=True)
+        self.dots_frame.pack(side=tk.LEFT, expand=True)
+        self._turns_label.pack(anchor=tk.W, expand=False)
+        self._useless_image.pack(side=tk.RIGHT)
 
 
-	def set_turns(self, turn):
-		self._turns_label.config(text="{}".format(turn))
 
 
-	def get_image(self, imageId):
-		return self._imgContainer.get(imageId, "Sorry Please register image first")
-
-	def set_image(self,imageId):
-		self._useless_image.config(image=imageId)
-	def set_status(self, image_id, count, obj):
+    def set_turns(self, turn):
+        self._turns_label.config(text="{}".format(turn))
 
 
-		self._status_label = tk.Label(self.dots_frame,
-									  image=image_id,
-									  text=count, compound="top")
-		self._status_label.pack(side=tk.RIGHT)
+    def get_image(self, imageId):
+        return self._imgContainer.get(imageId, "Sorry Please register image first")
 
-		self.dotsSerialize.append([obj.get_kind(),
-								   obj.get_name(),
-								   count,
-								   self._status_label])
+    def set_image(self,imageId):
+        self._useless_image.config(image=imageId)
+    def set_status(self, image_id, count, obj):
 
-	def set_score(self, score):
-		self._useless_image.config(text="{}".format(score))
 
-	def set_docts_step(self, obj):
+        self._status_label = tk.Label(self.dots_frame,
+                                      image=image_id,
+                                      text=count, compound="top")
+        self._status_label.pack(side=tk.RIGHT)
 
-		for num in range(len(self.dotsSerialize)):
-			if obj[num][1] is not self.dotsSerialize[num][2]:
-				self.dotsSerialize[num][3].config(text=obj[num][1])
-				self.dotsSerialize[num][2] = obj[num][1]
+        self.dotsSerialize.append([obj.get_kind(),
+                                   obj.get_name(),
+                                   count,
+                                   self._status_label])
 
-	# functionality
-	def image_register(self, imageId=None, load_all=False):
-		if imageId is None and not load_all:
-			raise KeyError("Sorry image id is important")
-		else:
-			if load_all:
-				for id, path in COMPANIONSMANAGER:
-					self._imgContainer[id] = tk.PhotoImage(file=COMPANIONSMANAGER[path])
-			else:
-				self._imgContainer[imageId] = tk.PhotoImage(file=COMPANIONSMANAGER[imageId])
+    def set_score(self, score):
+        self._useless_image.config(text="{}".format(score))
+
+    def set_docts_step(self, obj):
+
+        for num in range(len(self.dotsSerialize)):
+            if obj[num][1] is not self.dotsSerialize[num][2]:
+                self.dotsSerialize[num][3].config(text=obj[num][1])
+                self.dotsSerialize[num][2] = obj[num][1]
+
+    # functionality
+    def image_register(self, imageId=None, load_all=False):
+        if imageId is None and not load_all:
+            raise KeyError("Sorry image id is important")
+        else:
+            if load_all:
+                for id, path in COMPANIONSMANAGER:
+                    self._imgContainer[id] = tk.PhotoImage(file=COMPANIONSMANAGER[path])
+            else:
+                self._imgContainer[imageId] = tk.PhotoImage(file=COMPANIONSMANAGER[imageId])
 
 class IntervalBar(tk.Canvas):
 
 
-	def __init__(self, master,displacement,numBar,x=(0,0)):
-		self.count=0
-		self.numBar=numBar
-		X1,X2=x
-		Y1=10
-		Y2=30
-		self.canvas_coordinate = [
-			(X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
-			for num in range(0,numBar)
-		]
+    def __init__(self, master,displacement,numBar,x=(0,0)):
+        self.count=0
+        self.numBar=numBar
+        X1,X2=x
+        Y1=10
+        Y2=30
+        self.canvas_coordinate = [
+            (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
+            for num in range(0,numBar)
+        ]
 
 
-		self._canvas = tk.Canvas(master, bg="white",
-										width=500, height=30)
-		self._canvas.pack(side=tk.TOP)
+        self._canvas = tk.Canvas(master, bg="white",
+                                        width=500, height=30)
+        self._canvas.pack(side=tk.TOP)
 
-		self.draw_rectangle()
-
-
-	def draw_rectangle(self):
-		for data in self.canvas_coordinate:
-			x,y,h,l=data
-			self._canvas.create_rectangle(x,y,h,l)
+        self.draw_rectangle()
 
 
-	def fill_rectangle_blue(self, data):
-		x, y, h, l = data
-		self._canvas.create_rectangle(x,y,h,l, fill='blue')
+    def draw_rectangle(self):
+        for data in self.canvas_coordinate:
+            x,y,h,l=data
+            self._canvas.create_rectangle(x,y,h,l)
 
-	def fill_rectangle_blank(self,data):
-		for data in data:
-			x, y, h, l = data
-			self._canvas.create_rectangle(x, y, h, l, fill='white')
 
-	def config_progress(self):
-		if self.count<self.numBar:
-			self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
-			self.count += 1
-		else:
-			self.count=0
-			self.fill_rectangle_blank(self.canvas_coordinate)
+    def fill_rectangle_blue(self, data):
+        x, y, h, l = data
+        self._canvas.create_rectangle(x,y,h,l, fill='blue')
+
+    def fill_rectangle_blank(self,data):
+        for data in data:
+            x, y, h, l = data
+            self._canvas.create_rectangle(x, y, h, l, fill='white')
+
+    def config_progress(self):
+        if self.count<self.numBar:
+            self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
+            self.count += 1
+        else:
+            self.count=0
+            self.fill_rectangle_blank(self.canvas_coordinate)
 
 
 
@@ -218,253 +218,277 @@ class IntervalBar(tk.Canvas):
 
 # You may edit as much of DotsApp as you wish
 class DotsApp:
-	"""Top level GUI class for simple Dots & Co game"""
+    """Top level GUI class for simple Dots & Co game"""
 
-	def __init__(self, master):
-		"""Constructor
+    def __init__(self, master):
+        """Constructor
 
-		Parameters:
-			master (tk.Tk|tk.Frame): The parent widget
-		"""
+        Parameters:
+            master (tk.Tk|tk.Frame): The parent widget
+        """
 
-		# ------------------------
-		self._info_panel = InfoPanel(master)
-		self._interval_bar = IntervalBar(master, 60, 6, (80, 80))
-		# --------------------------
-		self._master = master
+        # ------------------------
+        self._info_panel = InfoPanel(master)
+        self._interval_bar = IntervalBar(master, 60, 6, (80, 80))
+        self._menu(master)
+        # --------------------------
+        self._master = master
 
-		self._playing = True
+        self._playing = True
 
-		self._image_manager = ImageManager('images/dots/', loader=load_image)
+        self._image_manager = ImageManager('images/dots/', loader=load_image)
 
-		# Game
-		counts = [10, 15, 25, 25]
-		random.shuffle(counts)
-		# randomly pair counts with each kind of dot
-		objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
+        # Game
+        counts = [10, 15, 25, 25]
+        random.shuffle(counts)
+        # randomly pair counts with each kind of dot
+        objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-		self._objectives = ObjectiveManager(objectives)
-		# --------------------------------
-		self._objectivesView = ObjectivesView(master,
-											  image_manager=self._image_manager)
-		for data in self._objectives.get_status():
-			self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
-										data[1],
-										data[0])
-		# --------------------------------
-		# Game
-		dead_cells = {(2, 2), (2, 3), (2, 4),
-					  (3, 2), (3, 3), (3, 4),
-					  (4, 2), (4, 3), (4, 4),
-					  (0, 7), (1, 7), (6, 7), (7, 7)}
-		self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
-							 dead_cells=dead_cells)
+        self._objectives = ObjectiveManager(objectives)
+        # --------------------------------
 
-		# The following code may be useful when you are implementing task 2:
-		# for i in range(0, 4):
-		#     for j in range(0, 2):
-		#         position = i, j
-		#         self._game.grid[position].set_dot(BasicDot(3))
-		# self._game.grid[(7, 3)].set_dot(BasicDot(1))
+        self._objectivesView = ObjectivesView(master,
+                                              image_manager=self._image_manager)
+        for data in self._objectives.get_status():
+            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
+                                        data[1],
+                                        data[0])
+        # --------------------------------
+        # Game
+        dead_cells = {(2, 2), (2, 3), (2, 4),
+                      (3, 2), (3, 3), (3, 4),
+                      (4, 2), (4, 3), (4, 4),
+                      (0, 7), (1, 7), (6, 7), (7, 7)}
+        self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
+                             dead_cells=dead_cells)
 
-		# Grid View
-		self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
-		self._grid_view.pack()
-		self._grid_view.draw(self._game.grid)
-		self.draw_grid_borders()
+        # The following code may be useful when you are implementing task 2:
+        # for i in range(0, 4):
+        #     for j in range(0, 2):
+        #         position = i, j
+        #         self._game.grid[position].set_dot(BasicDot(3))
+        # self._game.grid[(7, 3)].set_dot(BasicDot(1))
 
-		# Events
-		self.bind_events()
+        # Grid View
+        self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
+        self._grid_view.pack()
+        self._grid_view.draw(self._game.grid)
+        self.draw_grid_borders()
 
-		# Set initial score again to trigger view update automatically
-		self._refresh_status()
+        # Events
+        self.bind_events()
 
-	def draw_grid_borders(self):
-		"""Draws borders around the game grid"""
+        # Set initial score again to trigger view update automatically
+        self._refresh_status()
 
-		borders = list(self._game.grid.get_borders())
+    def draw_grid_borders(self):
+        """Draws borders around the game grid"""
 
-		# this is a hack that won't work well for multiple separate clusters
-		outside = max(borders, key=lambda border: len(set(border)))
+        borders = list(self._game.grid.get_borders())
 
-		for border in borders:
-			self._grid_view.draw_border(border, fill=border != outside)
+        # this is a hack that won't work well for multiple separate clusters
+        outside = max(borders, key=lambda border: len(set(border)))
 
-	def bind_events(self):
-		"""Binds relevant events"""
-		self._grid_view.on('start_connection', self._drag)
-		self._grid_view.on('move_connection', self._drag)
-		self._grid_view.on('end_connection', self._drop)
+        for border in borders:
+            self._grid_view.draw_border(border, fill=border != outside)
 
-		self._game.on('reset', self._refresh_status)
-		self._game.on('complete', self._drop_complete)
+    def bind_events(self):
+        """Binds relevant events"""
+        self._grid_view.on('start_connection', self._drag)
+        self._grid_view.on('move_connection', self._drag)
+        self._grid_view.on('end_connection', self._drop)
 
-		self._game.on('connect', self._connect)
-		self._game.on('undo', self._undo)
+        self._game.on('reset', self._refresh_status)
+        self._game.on('complete', self._drop_complete)
 
-	def _animation_step(self, step_name):
-		"""Runs for each step of an animation
-		
-		Parameters:
-			step_name (str): The name (type) of the step    
-		"""
-		print(step_name)
-		self._refresh_status()
-		self.draw_grid()
+        self._game.on('connect', self._connect)
+        self._game.on('undo', self._undo)
 
-	def animate(self, steps, callback=lambda: None):
-		"""Animates some steps (i.e. from selecting some dots, activating companion, etc.
-		
-		Parameters:
-			steps (generator): Generator which yields step_name (str) for each step in the animation
-		"""
+    def _animation_step(self, step_name):
+        """Runs for each step of an animation
 
-		if steps is None:
-			steps = (None for _ in range(1))
+        Parameters:
+            step_name (str): The name (type) of the step
+        """
+        print(step_name)
+        self._refresh_status()
+        self.draw_grid()
 
-		animation = create_animation(self._master, steps,
-									 delays=ANIMATION_DELAYS, delay=DEFAULT_ANIMATION_DELAY,
-									 step=self._animation_step, callback=callback)
-		animation()
+    def animate(self, steps, callback=lambda: None):
+        """Animates some steps (i.e. from selecting some dots, activating companion, etc.
 
-	def _drop(self, position):  # pylint: disable=unused-argument
-		"""Handles the dropping of the dragged connection
+        Parameters:
+            steps (generator): Generator which yields step_name (str) for each step in the animation
+        """
 
-		Parameters:
-			position (tuple<int, int>): The position where the connection was
-										dropped
-		"""
-		if not self._playing:
-			return
+        if steps is None:
+            steps = (None for _ in range(1))
 
-		if self._game.is_resolving():
-			return
+        animation = create_animation(self._master, steps,
+                                     delays=ANIMATION_DELAYS, delay=DEFAULT_ANIMATION_DELAY,
+                                     step=self._animation_step, callback=callback)
+        animation()
 
-		self._grid_view.clear_dragged_connections()
-		self._grid_view.clear_connections()
+    def _drop(self, position):  # pylint: disable=unused-argument
+        """Handles the dropping of the dragged connection
 
-		self.animate(self._game.drop())
+        Parameters:
+            position (tuple<int, int>): The position where the connection was
+                                        dropped
+        """
+        if not self._playing:
+            return
 
-	def _connect(self, start, end):
-		"""Draws a connection from the start point to the end point
+        if self._game.is_resolving():
+            return
 
-		Parameters:
-			start (tuple<int, int>): The position of the starting dot
-			end (tuple<int, int>): The position of the ending dot
-		"""
+        self._grid_view.clear_dragged_connections()
+        self._grid_view.clear_connections()
 
-		if self._game.is_resolving():
-			return
-		if not self._playing:
-			return
-		self._grid_view.draw_connection(start, end,
-										self._game.grid[start].get_dot().get_kind())
+        self.animate(self._game.drop())
 
-	def _undo(self, positions):
-		"""Removes all the given dot connections from the grid view
+    def _connect(self, start, end):
+        """Draws a connection from the start point to the end point
 
-		Parameters:
-			positions (list<tuple<int, int>>): The dot connects to remove
-		"""
-		for _ in positions:
-			self._grid_view.undo_connection()
+        Parameters:
+            start (tuple<int, int>): The position of the starting dot
+            end (tuple<int, int>): The position of the ending dot
+        """
 
-	def _drag(self, position):
-		"""Attempts to connect to the given position, otherwise draws a dragged
-		line from the start
+        if self._game.is_resolving():
+            return
+        if not self._playing:
+            return
+        self._grid_view.draw_connection(start, end,
+                                        self._game.grid[start].get_dot().get_kind())
 
-		Parameters:
-			position (tuple<int, int>): The position to drag to
-		"""
+    def _undo(self, positions):
+        """Removes all the given dot connections from the grid view
 
-		if self._game.is_resolving():
-			return
-		if not self._playing:
-			return
+        Parameters:
+            positions (list<tuple<int, int>>): The dot connects to remove
+        """
+        for _ in positions:
+            self._grid_view.undo_connection()
 
-		tile_position = self._grid_view.xy_to_rc(position)
+    def _drag(self, position):
+        """Attempts to connect to the given position, otherwise draws a dragged
+        line from the start
 
-		if tile_position is not None:
-			cell = self._game.grid[tile_position]
-			dot = cell.get_dot()
+        Parameters:
+            position (tuple<int, int>): The position to drag to
+        """
 
-			if dot and self._game.connect(tile_position):
-				self._grid_view.clear_dragged_connections()
-				return
+        if self._game.is_resolving():
+            return
+        if not self._playing:
+            return
 
-		kind = self._game.get_connection_kind()
+        tile_position = self._grid_view.xy_to_rc(position)
 
-		if not len(self._game.get_connection_path()):
-			return
+        if tile_position is not None:
+            cell = self._game.grid[tile_position]
+            dot = cell.get_dot()
 
-		start = self._game.get_connection_path()[-1]
+            if dot and self._game.connect(tile_position):
+                self._grid_view.clear_dragged_connections()
+                return
 
-		if start:
-			self._grid_view.draw_dragged_connection(start, position, kind)
+        kind = self._game.get_connection_kind()
 
-	@staticmethod
-	def remove(*_):
-		"""Deprecated in 1.1.0"""
-		raise DeprecationWarning("Deprecated in 1.1.0")
+        if not len(self._game.get_connection_path()):
+            return
 
-	def draw_grid(self):
-		"""Draws the grid"""
-		self._grid_view.draw(self._game.grid)
+        start = self._game.get_connection_path()[-1]
 
-	def reset(self):
-		"""Resets the game"""
-		raise NotImplementedError()
+        if start:
+            self._grid_view.draw_dragged_connection(start, position, kind)
 
-	def check_game_over(self):
-		"""Checks whether the game is over and shows an appropriate message box if so"""
-		state = self._game.get_game_state()
+    @staticmethod
+    def remove(*_):
+        """Deprecated in 1.1.0"""
+        raise DeprecationWarning("Deprecated in 1.1.0")
 
-		if state == self._game.GameState.WON:
-			showinfo("Game Over!", "You won!!!")
-			self._playing = False
-		elif state == self._game.GameState.LOST:
-			showinfo("Game Over!",
-					 f"You didn't reach the objective(s) in time. You connected {self._game.get_score()} points")
-			self._playing = False
+    def draw_grid(self):
+        """Draws the grid"""
+        self._grid_view.draw(self._game.grid)
 
-	def _drop_complete(self):
-		"""Handles the end of a drop animation"""
+    def reset(self):
+        """Resets the game"""
+        raise NotImplementedError()
 
-		# Useful for when implementing a companion
-		# if self._game.companion.is_fully_charged():
-		#     self._game.companion.reset()
-		#     steps = self._game.companion.activate(self._game)
-		#     self._refresh_status()
-		#
-		#     return self.animate(steps)
-		self._interval_bar.config_progress()
+    def check_game_over(self):
+        """Checks whether the game is over and shows an appropriate message box if so"""
+        state = self._game.get_game_state()
 
-		# Need to check whether the game is over
-		raise NotImplementedError()  # no mercy for stooges
+        if state == self._game.GameState.WON:
+            showinfo("Game Over!", "You won!!!")
+            self._playing = False
+        elif state == self._game.GameState.LOST:
+            showinfo("Game Over!",
+                     f"You didn't reach the objective(s) in time. You connected {self._game.get_score()} points")
+            self._playing = False
 
-	def _refresh_status(self):
-		"""Handles change in score"""
+    def _drop_complete(self):
+        """Handles the end of a drop animation"""
 
-		# Normally, this should raise the following error:
-		# raise NotImplementedError()
-		# But so that the game can work prior to this method being implemented,
-		# we'll just print some information
-		# Sometimes I believe Python ignores all my comments :(
-		score = self._game.get_score()
-		self._info_panel.set_score(score)
-		self._info_panel.set_docts_step(self._objectives.get_status())
-		self._info_panel.set_turns(self._game.get_moves())
-		print("Score is now {}.".format(score))
+        # Useful for when implementing a companion
+        # if self._game.companion.is_fully_charged():
+        #     self._game.companion.reset()
+        #     steps = self._game.companion.activate(self._game)
+        #     self._refresh_status()
+        #
+        #     return self.animate(steps)
+        self._interval_bar.config_progress()
+
+        # Need to check whether the game is over
+        raise NotImplementedError()  # no mercy for stooges
+
+    def _refresh_status(self):
+        """Handles change in score"""
+
+        # Normally, this should raise the following error:
+        # raise NotImplementedError()
+        # But so that the game can work prior to this method being implemented,
+        # we'll just print some information
+        # Sometimes I believe Python ignores all my comments :(
+        score = self._game.get_score()
+        self._info_panel.set_score(score)
+        self._info_panel.set_docts_step(self._objectives.get_status())
+        self._info_panel.set_turns(self._game.get_moves())
+        print("Score is now {}.".format(score))
+
+    def _menu(self, master):
+        menubar = tk.Menu(master)
+        master.config(menu=menubar)
+
+        fileMenu = tk.Menu(menubar)
+
+        submenu = tk.Menu(fileMenu)
+        submenu.add_command(label="Companion",command=self.load_game)
+        submenu.add_command(label="No Companion",command=self.reset)
+        fileMenu.add_cascade(label='New Game', menu=submenu, underline=0)
+
+        fileMenu.add_separator()
+
+        fileMenu.add_command(label="Exit", underline=0, command=lambda :
+        self._master.destroy()
+        if askyesno('Verify', 'Do you really wanna quit?')
+        else showinfo('No', 'Welcome back'))
+
+        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
 
 
+    def load_game(self):
+        pass
 def main():
-	"""Sets-up the GUI for Dots & Co"""
-	# Write your GUI instantiation code here
-	root = tk.Tk()
-	app = DotsApp(root)
+    """Sets-up the GUI for Dots & Co"""
+    # Write your GUI instantiation code here
+    root = tk.Tk()
+    app = DotsApp(root)
 
-	root.mainloop()
+    root.mainloop()
 
 
 if __name__ == "__main__":
-	main()
+    main()
