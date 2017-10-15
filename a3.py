@@ -293,10 +293,7 @@ class DotsApp:
         for position in eskimoCompanionPosition:
             # print(position)
             if position not in dead_cells:
-                # i,j=position
-                # i=i+1 if i==0 else i-1
-                # i = j + 1 if j == 0 else j - 1
-                self._game.grid[position].set_dot(SwirlDot(1))
+                self._game.grid[position].set_dot(SwirlDot(random.randint(1,5)))
 
         # for i in range(0, 4):
         #     for j in range(0, 2):
