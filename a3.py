@@ -12,6 +12,8 @@ from tkinter.messagebox import showinfo, askyesno
 import os
 import random
 
+from companion import AbstractCompanion
+
 try:
     from PIL import ImageTk, Image
 
@@ -20,7 +22,7 @@ except ImportError:
     HAS_PIL = False
 
 from view import GridView, ObjectivesView
-from game import DotGame, ObjectiveManager
+from game import DotGame, ObjectiveManager, CompanionGame
 from dot import BasicDot
 from util import create_animation, ImageManager
 
@@ -73,12 +75,19 @@ ANIMATION_DELAYS = {
     'ANIMATION_DONE': 0,
     'ANIMATION_STEP': 200
 }
+
 COMPANIONSMANAGER = {
     "useless.gif": "images/companions/useless.gif",
     "penguin.gif": "images/companions/penguin.gif",
     "penguin.png": "images/companions/penguin.png",
     "penguin_large.png": "images/companions/penguin_large.png",
+    "buffalo_large.png": "images/companions/buffalo_large.png",
+    "deer_large.png": "images/companions/deer_large.png",
+    "eskimo.png": "images/companions/eskimo.png",
+    "goat.png": "images/companions/goat.png",
+
 }
+
 
 # Define your classes here
 
@@ -89,21 +98,19 @@ class InfoPanel(tk.Frame):
         info_frame = tk.Frame(master)
         _turns_frame = tk.Frame(info_frame)
 
-
         companions_frame = tk.Frame(info_frame)
 
         self.dots_frame = tk.Frame(info_frame)
 
         self._turns_label = tk.Label(_turns_frame,
-                                     text="jkhjjkhkjhs", font=(None, 30))
+                                     text="", font=(None, 30))
 
         # Set center image and score next to image
-        self.image_register("useless.gif")
+
         self._useless_image = tk.Label(companions_frame, text="",
                                        font=(None, 40),
-                                       image=self.get_image("useless.gif"),
+                                       image=self.image_register("useless.gif").get_image("useless.gif"),
                                        compound="right")
-
 
         # Packing all the frames
         info_frame.pack()
@@ -113,20 +120,16 @@ class InfoPanel(tk.Frame):
         self._turns_label.pack(anchor=tk.W, expand=False)
         self._useless_image.pack(side=tk.RIGHT)
 
-
-
-
     def set_turns(self, turn):
         self._turns_label.config(text="{}".format(turn))
-
 
     def get_image(self, imageId):
         return self._imgContainer.get(imageId, "Sorry Please register image first")
 
-    def set_image(self,imageId):
+    def set_image(self, imageId):
         self._useless_image.config(image=imageId)
-    def set_status(self, image_id, count, obj):
 
+    def set_status(self, image_id, count, obj):
 
         self._status_label = tk.Label(self.dots_frame,
                                       image=image_id,
@@ -142,7 +145,6 @@ class InfoPanel(tk.Frame):
         self._useless_image.config(text="{}".format(score))
 
     def set_docts_step(self, obj):
-
         for num in range(len(self.dotsSerialize)):
             if obj[num][1] is not self.dotsSerialize[num][2]:
                 self.dotsSerialize[num][3].config(text=obj[num][1])
@@ -158,62 +160,80 @@ class InfoPanel(tk.Frame):
                     self._imgContainer[id] = tk.PhotoImage(file=COMPANIONSMANAGER[path])
             else:
                 self._imgContainer[imageId] = tk.PhotoImage(file=COMPANIONSMANAGER[imageId])
+        return self
+
 
 class IntervalBar(tk.Canvas):
-
-
-    def __init__(self, master,displacement,numBar,x=(0,0)):
-        self.count=0
-        self.numBar=numBar
-        X1,X2=x
-        Y1=10
-        Y2=30
+    def __init__(self, master, displacement, numBar, x=(0, 0)):
+        self.count = 0
+        self.numBar = numBar
+        X1, X2 = x
+        Y1 = 10
+        Y2 = 30
         self.canvas_coordinate = [
             (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
-            for num in range(0,numBar)
+            for num in range(0, numBar)
         ]
 
-
         self._canvas = tk.Canvas(master, bg="white",
-                                        width=500, height=30)
+                                 width=500, height=30)
         self._canvas.pack(side=tk.TOP)
 
         self.draw_rectangle()
 
-
     def draw_rectangle(self):
         for data in self.canvas_coordinate:
-            x,y,h,l=data
-            self._canvas.create_rectangle(x,y,h,l)
-
+            x, y, h, l = data
+            self._canvas.create_rectangle(x, y, h, l)
 
     def fill_rectangle_blue(self, data):
         x, y, h, l = data
-        self._canvas.create_rectangle(x,y,h,l, fill='blue')
+        self._canvas.create_rectangle(x, y, h, l, fill='blue')
 
-    def fill_rectangle_blank(self,data):
+    def fill_rectangle_blank(self, data):
         for data in data:
             x, y, h, l = data
             self._canvas.create_rectangle(x, y, h, l, fill='white')
 
     def config_progress(self):
-        if self.count<self.numBar:
+        if self.count < self.numBar:
             self.fill_rectangle_blue(list(self.canvas_coordinate[self.count]))
             self.count += 1
         else:
-            self.count=0
+            self.count = 0
             self.fill_rectangle_blank(self.canvas_coordinate)
 
+    def get_turn(self):
+        return self.count
 
 
+class EskimoCompanion(AbstractCompanion):
+    NAME = 'Eskimo'
+
+    def __init__(self):
+        super().__init__()
+
+    def activate(self, game):
+        """Activates the companion's ability
+
+        Parameters:
+            game (DotGame): The game being player
+
+        Yield:
+            None: Once for each step in an animation
+
+        Notes:
+            Typically, this method will return:
+                - game.activate_all(positions): If positions need to be activated
+                - None: If no animation needs to occur
+        """
+        if game.companion.get_charge() == game.companion.get_max_charge():
+            return game.activate_all()
 
 
-
-
-
-
-
-
+class SwirlDot(BasicDot):
+    DOT_NAME = "swirl"
+    pass
 
 
 # You may edit as much of DotsApp as you wish
@@ -228,6 +248,7 @@ class DotsApp:
         """
 
         # ------------------------
+        self.charge = 0
         self._info_panel = InfoPanel(master)
         self._interval_bar = IntervalBar(master, 60, 6, (80, 80))
         self._menu(master)
@@ -259,10 +280,24 @@ class DotsApp:
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
-        self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
-                             dead_cells=dead_cells)
-
+        # self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
+        #                      dead_cells=dead_cells)
+        self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
+                                   kinds=(1, 2, 3, 4), size=(8, 8),
+                                   dead_cells=dead_cells)
         # The following code may be useful when you are implementing task 2:
+        randomRow = [random.randint(1, 7) for num in range(4)]
+        randomColumn = [random.randint(1, 7) for num in range(4)]
+        eskimoCompanionPosition = set(zip(randomRow, randomColumn))
+
+        for position in eskimoCompanionPosition:
+            # print(position)
+            if position not in dead_cells:
+                # i,j=position
+                # i=i+1 if i==0 else i-1
+                # i = j + 1 if j == 0 else j - 1
+                self._game.grid[position].set_dot(SwirlDot(1))
+
         # for i in range(0, 4):
         #     for j in range(0, 2):
         #         position = i, j
@@ -310,7 +345,8 @@ class DotsApp:
         Parameters:
             step_name (str): The name (type) of the step
         """
-        print(step_name)
+        # self._drop_complete(step_name)
+        # print(step_name)
         self._refresh_status()
         self.draw_grid()
 
@@ -432,17 +468,23 @@ class DotsApp:
     def _drop_complete(self):
         """Handles the end of a drop animation"""
 
-        # Useful for when implementing a companion
-        # if self._game.companion.is_fully_charged():
-        #     self._game.companion.reset()
-        #     steps = self._game.companion.activate(self._game)
-        #     self._refresh_status()
-        #
-        #     return self.animate(steps)
         self._interval_bar.config_progress()
+        self._game.companion.charge()
+        # Useful for when implementing a companion
+        if self._game.companion.is_fully_charged():
+            self._game.companion.reset()
+            steps = self._game.companion.activate(self._game)
+            self._refresh_status()
 
-        # Need to check whether the game is over
-        raise NotImplementedError()  # no mercy for stooges
+            return self.animate(steps)
+
+        print(self._game.companion.get_charge())
+
+        if self._playing:
+            print("drop_complete :{}".format(self._game.is_resolving()))
+            return True
+
+            # Need to check whether the game is over
 
     def _refresh_status(self):
         """Handles change in score"""
@@ -456,7 +498,11 @@ class DotsApp:
         self._info_panel.set_score(score)
         self._info_panel.set_docts_step(self._objectives.get_status())
         self._info_panel.set_turns(self._game.get_moves())
-        print("Score is now {}.".format(score))
+        # print("Score is now {}.".format(score))
+
+        if self._objectives.is_complete():
+            self._objectives.reset()
+            self.reset()
 
     def _menu(self, master):
         menubar = tk.Menu(master)
@@ -465,22 +511,23 @@ class DotsApp:
         fileMenu = tk.Menu(menubar)
 
         submenu = tk.Menu(fileMenu)
-        submenu.add_command(label="Companion",command=self.load_game)
-        submenu.add_command(label="No Companion",command=self.reset)
+        submenu.add_command(label="Companion", command=self.load_game)
+        submenu.add_command(label="No Companion", command=self.reset)
         fileMenu.add_cascade(label='New Game', menu=submenu, underline=0)
 
         fileMenu.add_separator()
 
-        fileMenu.add_command(label="Exit", underline=0, command=lambda :
+        fileMenu.add_command(label="Exit", underline=0, command=lambda:
         self._master.destroy()
         if askyesno('Verify', 'Do you really wanna quit?')
         else showinfo('No', 'Welcome back'))
 
         menubar.add_cascade(label="File", underline=0, menu=fileMenu)
 
-
     def load_game(self):
         pass
+
+
 def main():
     """Sets-up the GUI for Dots & Co"""
     # Write your GUI instantiation code here
