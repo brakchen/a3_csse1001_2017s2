@@ -159,7 +159,7 @@ class InfoPanel(tk.Frame):
             raise KeyError("Sorry image id is important")
         else:
             if load_all:
-                for id, path in companions_manager:
+                for id, path in companions_manager.items():
                     self._image_dict[id] = tk.PhotoImage(file=companions_manager[path])
             else:
                 self._image_dict[image_id] = tk.PhotoImage(file=companions_manager[image_id])
