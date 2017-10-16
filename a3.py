@@ -193,7 +193,7 @@ class IntervalBar(tk.Canvas):
         x, y, z, w = coordinate
         self._canvas.create_rectangle(x, y, h, l, fill='white')
 
-    def config_progress(self):
+    def changing_progress(self):
         if self._coordinate == 5:
             
             self._canvas.fill_rectangle_blank(80, 10, 140, 30)
@@ -256,7 +256,7 @@ class DotsApp:
         """
 
         
-        self.charge = 0
+        self._charge = 0
         self._infopanel = InfoPanel(master)
         self._intervalbar = IntervalBar(master)
         self.menu(master)
@@ -280,8 +280,7 @@ class DotsApp:
                                               image_manager=self._image_manager)
         for data in self._objectives.get_status():
             self._infopanel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
-                                        data[1],
-                                        data[0])
+                                       data[1],data[0])
         
         # Game
         dead_cells = {(2, 2), (2, 3), (2, 4),
@@ -474,7 +473,7 @@ class DotsApp:
     def _drop_complete(self):
         """Handles the end of a drop animation"""
 
-        self._intervalbar.config_progress()
+        self._intervalbar.changing_progress()
         self._game.companion.charge()
         # Useful for when implementing a companion
         if self._game.companion.is_fully_charged():
@@ -499,8 +498,6 @@ class DotsApp:
         self._infopanel.set_score(score)
         self._infopanel.set_remaining_dots(self._objectives.get_status())
         self._infopanel.set_turns(self._game.get_moves())
-
-
         if self._objectives.is_complete():
             self._objectives.reset()
             self.reset()
