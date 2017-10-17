@@ -100,6 +100,7 @@ class InfoPanel(tk.Frame):
 
     """
     def __init__(self, master):
+
         self._imgContainer = {}
         self.dotsSerialize = []
         info_frame = tk.Frame(master)
@@ -141,9 +142,10 @@ class InfoPanel(tk.Frame):
 
     def set_status(self, image_id, count, obj):
         """Set objectives and dots to be right side """
-        self._status_label = tk.Label(self.dots_frame,
+        self._status_label=tk.Label(self.dots_frame,
                                       image=image_id,
                                       text=count, compound="top")
+
         self._status_label.pack(side=tk.RIGHT)
 
         self.dotsSerialize.append([obj.get_kind(),
@@ -151,11 +153,19 @@ class InfoPanel(tk.Frame):
                                    count,
                                    self._status_label])
 
+    def reset_status(self):
+        for data in self.dotsSerialize:
+            data[-1].pack_forget()
+        self.dotsSerialize.clear()
+
+
+
     def set_score(self, score):
         """Set score for playing"""
         self._useless_image.config(text="{}".format(score))
 
     def set_docts_step(self, obj):
+        print(obj)
         """Refresh remaining dots after each move"""
         for num in range(len(self.dotsSerialize)):
             if obj[num][1] is not self.dotsSerialize[num][2]:
@@ -169,7 +179,6 @@ class InfoPanel(tk.Frame):
             raise KeyError("Sorry image id is important")
         else:
             if load_all:
-
                 for id, path in COMPANIONSMANAGER.items():
                     self._imgContainer[id] = tk.PhotoImage(file=path)
             else:
@@ -198,7 +207,7 @@ class IntervalBar(tk.Canvas):
             (X1 + displacement * num, Y1, X2 + displacement * (num + 1), Y2)
             for num in range(0, numBar)
         ]
-        print(self.canvas_coordinate)
+        # print(self.canvas_coordinate)
         self._canvas = tk.Canvas(master, bg="white",
                                  width=500, height=30)
         self._canvas.pack(side=tk.TOP)
@@ -337,13 +346,10 @@ class DotsApp:
 
         self._objectivesView = ObjectivesView(master,
                                               image_manager=self._image_manager)
-        for data in self._objectives.get_status():
-            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
-                                        data[1],
-                                        data[0])
+        self.setup_dot_status()
         # --------------------------------
         # Game
-        dead_cells = {(2, 2), (2, 3), (2, 4),
+        self.dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
@@ -351,16 +357,9 @@ class DotsApp:
         #                      dead_cells=dead_cells)
         self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
                                    kinds=(1, 2, 3, 4), size=(8, 8),
-                                   dead_cells=dead_cells)
+                                   dead_cells=self.dead_cells)
 
-        randomRow = [random.randint(1, 7) for num in range(4)]
-        randomColumn = [random.randint(1, 7) for num in range(4)]
-        self.eskimoCompanionPosition = set(zip(randomRow, randomColumn))
-
-        for position in self.eskimoCompanionPosition:
-            # print(position)
-            if position not in dead_cells:
-                self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
+        self.set_up_compaino()
                 # for position ,dots in self._game.grid.items():
                 # 	print("position {0} :::: dots {1}".format(position,isinstance(dots.get_dot(),BasicDot)))
                 # print(self._game.grid[position].get_dot())
@@ -383,6 +382,21 @@ class DotsApp:
 
         # Set initial score again to trigger view update automatically
         self._refresh_status()
+    def set_up_compaino(self):
+        randomRow = [random.randint(1, 7) for num in range(4)]
+        randomColumn = [random.randint(1, 7) for num in range(4)]
+        eskimoCompanionPosition = set(zip(randomRow, randomColumn))
+
+        for position in eskimoCompanionPosition:
+            # print(position)
+            if position not in self.dead_cells:
+                self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
+
+    def setup_dot_status(self):
+        for data in self._objectives.get_status():
+            self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
+                                        data[1],
+                                        data[0])
 
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
@@ -522,7 +536,20 @@ class DotsApp:
 
     def reset(self):
         """Resets the game"""
-        raise NotImplementedError()
+        # counts = [10, 15, 25, 25]
+        # random.shuffle(counts)
+        # # randomly pair counts with each kind of dot
+        # objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
+        self._objectives.reset()
+        # self._objectives = ObjectiveManager(objectives)
+        self._info_panel.reset_status()
+        self.setup_dot_status()
+        # self._info_panel.set_docts_step(self._objectives.get_status())
+        self._game.reset()
+        self._grid_view.draw(self._game.grid)
+        self.set_up_compaino()
+
+
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -569,38 +596,28 @@ class DotsApp:
         # Sometimes I believe Python ignores all my comments :(
         score = self._game.get_score()
         self._info_panel.set_score(score)
+        # self._info_panel.set_docts_step(self._objectives.is_complete())
         self._info_panel.set_docts_step(self._objectives.get_status())
         self._info_panel.set_turns(self._game.get_moves())
         # print("Score is now {}.".format(score))
 
         if self._objectives.is_complete():
-            self._objectives.reset()
             self.reset()
 
     def _menu(self, master):
         """Constructs file menu"""
         menubar = tk.Menu(master)
-        master.config(menu=menubar)
 
         fileMenu = tk.Menu(menubar)
 
-        submenu = tk.Menu(fileMenu)
-        submenu.add_command(label="Companion", command=self.load_game)
-        submenu.add_command(label="No Companion", command=self.reset)
-        fileMenu.add_cascade(label='New Game', menu=submenu, underline=0)
-
-        fileMenu.add_separator()
-
+        fileMenu.add_command(label="New Game", command=self.reset)
         fileMenu.add_command(label="Exit", underline=0, command=lambda:
         self._master.destroy()
         if askyesno('Verify', 'Do you really wanna quit?')
         else showinfo('No', 'Welcome back'))
 
         menubar.add_cascade(label="File", underline=0, menu=fileMenu)
-
-    def load_game(self):
-        pass
-
+        master.config(menu=fileMenu)
 
 
 def main():

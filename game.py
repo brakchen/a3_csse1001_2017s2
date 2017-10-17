@@ -353,7 +353,7 @@ class ObjectiveManager:
                     List of (objective, count) pairs, where count is the 
                     total number of times objective needs to be tallied
         """
-        self._objective_counts = objectives
+        self._objective_counts = list(objectives)
         self.reset()
 
     def reset(self):
