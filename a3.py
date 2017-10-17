@@ -135,11 +135,12 @@ class InfoPanel(tk.Frame):
 									  image=image,
 									  text=move, compound="top")
 		self.StatusLabel.pack(side=tk.RIGHT)
-
+		#--------------------------------------------------------
 		self.DotsList.append([objective.get_kind(),
 								   objective.get_name(),
 								   move,
 								   self.StatusLabel])
+		#--------------------------------------------------------
 
 	def set_score(self, score):
 		"""Set score for playing"""
@@ -147,10 +148,13 @@ class InfoPanel(tk.Frame):
 
 	def set_dots_remaining(self, obj):
 		"""Refresh remaining dots after each move"""
+		#--------------------------------------------------------
+
 		for num in range(len(self.DotsList)):
 			if obj[num][1] is not self.DotsList[num][2]:
 				self.DotsList[num][3].config(text=obj[num][1])
 				self.DotsList[num][2] = obj[num][1]
+		# --------------------------------------------------------
 
 	# functionality
 	def image_register(self, image=None, load_all=False):
@@ -165,6 +169,8 @@ class InfoPanel(tk.Frame):
 			"eskimo.png": "images/companions/eskimo.png",
 			"goat.png": "images/companions/goat.png"
 		}
+		#--------------------------------------------------------
+
 		if image is None and not load_all:
 			raise KeyError("Sorry image id is important")
 		else:
@@ -174,6 +180,8 @@ class InfoPanel(tk.Frame):
 			else:
 				self.ImageContainer[image] = tk.PhotoImage(file=images[image])
 				return self
+		#--------------------------------------------------------
+
 
 
 
@@ -189,6 +197,8 @@ class IntervalBar(tk.Canvas):
 		    length(int): Length of each small rectangle
 		    x(tuple):Starting point of rectangle
 		"""
+		#--------------------------------------------------------
+
 		self.ProgressCount = 0
 		self.num_of_rectangles = num_of_rectangles
 		X1, X2 = x
@@ -198,12 +208,15 @@ class IntervalBar(tk.Canvas):
 			(X1 + length * i, Y1, X2 + length * (i + 1), Y2)
 			for i in range(0, num_of_rectangles)
 		]
-		
+		#--------------------------------------------------------
+
 		self._canvas = tk.Canvas(master, bg="white",
 								 width=500, height=30)
 		self._canvas.pack(side=tk.TOP)
 
 		self.draw_rectangle()
+
+	# --------------------------------------------------------
 
 	def draw_rectangle(self):
 		"""Draws rectangles at given position"""
@@ -233,10 +246,14 @@ class IntervalBar(tk.Canvas):
 				self.blue_rectangle(list(self.canvas_coordinate[coordinate]))
 
 
+
 	def get_turn(self):
 		"""(int)Return the progress move"""
 		return self.ProgressCount
 
+	# --------------------------------------------------------
+
+#--------------------------------------------------------
 
 class EskimoCompanion(AbstractCompanion):
 	"""A class that builds function for EskimoCompanion"""
@@ -277,7 +294,7 @@ class EskimoCompanion(AbstractCompanion):
 			positionList.append(pos)
 
 		return game.activate_all(set(positionList))
-
+#--------------------------------------------------------
 
 
 class SwirlDot(BasicDot):
@@ -315,13 +332,14 @@ class DotsApp:
 		objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], ProgressCounts)
 
 		self._objectives = ObjectiveManager(objectives)
-
+		# --------------------------------------------------------
 		self.ObjectivesView = ObjectivesView(master,
 											  image_manager=self.ImageManager)
 		for status in self._objectives.get_status():
 			self.InfoPanel.set_status(self.ObjectivesView.load_image(status[0], (20, 20)),
 										status[1],
 										status[0])
+		# --------------------------------------------------------
 		# Game
 		dead_cells = {(2, 2), (2, 3), (2, 4),
 					  (3, 2), (3, 3), (3, 4),
@@ -331,7 +349,7 @@ class DotsApp:
 		self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
 								   kinds=(1, 2, 3, 4), size=(8, 8),
 								   dead_cells=dead_cells)
-
+		# --------------------------------------------------------
 		randomRow = [random.randint(1, 7) for num in range(4)]
 		randomColumn = [random.randint(1, 7) for num in range(4)]
 		self.eskimoCompanionPosition = set(zip(randomRow, randomColumn))
@@ -339,7 +357,7 @@ class DotsApp:
 		for position in self.eskimoCompanionPosition:
 			if position not in dead_cells:
 				self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
-
+		# --------------------------------------------------------
 
 		# Grid View
 		self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self.ImageManager)
@@ -503,7 +521,7 @@ class DotsApp:
 
 	def _drop_complete(self):
 		"""Handles the end of a drop animation"""
-		#I did not make changes in the method
+		# --------------------------------------------------------
 		self._game.companion.charge()
 		self.IntervalBar.config_progress(self._game.companion.get_charge())
 		if self._playing:
@@ -518,6 +536,7 @@ class DotsApp:
 				self.IntervalBar.config_progress(self._game.companion.get_charge())
 		return True
 
+		# --------------------------------------------------------
 	# Need to check whether the game is over
 
 	def _refresh_status(self):
@@ -527,15 +546,17 @@ class DotsApp:
 		self.InfoPanel.set_moves(self._game.get_moves())
 		self.InfoPanel.set_dots_remaining(self._objectives.get_status())
 
+		# --------------------------------------------------------
 		if self._objectives.is_complete():
 			self._objectives.reset()
 			self.reset()
+		# --------------------------------------------------------
 
 	def menu(self, master):
 		"""filemenu bar on top"""
 		menubar = tk.Menu(master)
 		master.config(menu=menubar)
-
+		# -------------------------------------------------------- I did not make changes on you submenu
 		filemenu = tk.Menu(menubar)
 		menubar.add_cascade(label="File", underline=0, menu=filemenu)
 		submenu = tk.Menu(filemenu)
@@ -546,8 +567,10 @@ class DotsApp:
 		filemenu.add_separator()
 		filemenu.add_command(label="Exit", underline=0, command=self.exit)
 
-	def exit(self):
+		# --------------------------------------------------------
 
+	def exit(self):
+		#I make changes here. Don't edit
 		if askyesno('!', 'Do you wanna quit?'):
 			self.master.destroy()
 
@@ -559,9 +582,11 @@ class DotsApp:
 	def get_companion_dot(self):
 		#I did not make changes here
 		"""Return companion dot required"""
+		# --------------------------------------------------------
 		for position ,dots in self._game.grid.items():
 			if dots.get_dot() is not None and isinstance(dots.get_dot(),SwirlDot):
 					yield (position,dots.get_dot())
+		# --------------------------------------------------------
 
 
 def main():
