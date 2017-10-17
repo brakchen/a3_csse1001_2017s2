@@ -92,7 +92,14 @@ COMPANIONSMANAGER = {
 # Define your classes here
 
 class InfoPanel(tk.Frame):
+	"""A class constructs moves, score, image, and objectives"""
 	def __init__(self, master):
+		"""Constructs information panel containing moves, score, image, and objectives
+
+		Parameters:
+		    _imgContainer(dict):a dict image being key, location being value
+		    dotsSerialize(list): a list that stores dots and objectives
+		"""
 		self._imgContainer = {}
 		self.dotsSerialize = []
 		info_frame = tk.Frame(master)
@@ -121,16 +128,19 @@ class InfoPanel(tk.Frame):
 		self._useless_image.pack(side=tk.RIGHT)
 
 	def set_turns(self, turn):
+		"""Set turns after each move"""
 		self._turns_label.config(text="{}".format(turn))
 
 	def get_image(self, imageId):
+		"""Return image in container."""
 		return self._imgContainer.get(imageId, "Sorry Please register image first")
 
 	def set_image(self, imageId):
+		"""Set the image for panel"""
 		self._useless_image.config(image=imageId)
 
 	def set_status(self, image_id, count, obj):
-
+		"""Set objectives and dots to be right side """
 		self._status_label = tk.Label(self.dots_frame,
 									  image=image_id,
 									  text=count, compound="top")
@@ -142,9 +152,11 @@ class InfoPanel(tk.Frame):
 								   self._status_label])
 
 	def set_score(self, score):
+		"""Set score for playing"""
 		self._useless_image.config(text="{}".format(score))
 
 	def set_docts_step(self, obj):
+		"""Refresh remaining dots after each move"""
 		for num in range(len(self.dotsSerialize)):
 			if obj[num][1] is not self.dotsSerialize[num][2]:
 				self.dotsSerialize[num][3].config(text=obj[num][1])
@@ -152,6 +164,7 @@ class InfoPanel(tk.Frame):
 
 	# functionality
 	def image_register(self, imageId=None, load_all=False):
+		"""Register an image; raise key error if none image found"""
 		if imageId is None and not load_all:
 			raise KeyError("Sorry image id is important")
 		else:
@@ -167,7 +180,16 @@ class InfoPanel(tk.Frame):
 
 
 class IntervalBar(tk.Canvas):
+	"""A class that constructs progress bar"""
 	def __init__(self, master, displacement, numBar, x=(0, 0)):
+		"""Constructs canvas for progressing bar
+
+		Parameters:
+		    count(int): Number of progress after each move
+		    numBar(int): An integer represents number of rectangle to draw
+		    displacement(int): Length of each small rectangle
+		    x(tuple):Starting point of rectangle
+		"""
 		self.count = 0
 		self.numBar = numBar
 		X1, X2 = x
@@ -185,19 +207,23 @@ class IntervalBar(tk.Canvas):
 		self.draw_rectangle()
 
 	def draw_rectangle(self):
+		"""Draws rectangles at given position"""
 		for data in self.canvas_coordinate:
 			x, y, h, l = data
 			self._canvas.create_rectangle(x, y, h, l)
 
 	def fill_rectangle_blue(self, data):
+		"""Fill rectangle with blue"""
 		x, y, h, l = data
 		self._canvas.create_rectangle(x, y, h, l, fill='blue')
 
 	def fill_rectangle_blank(self, data):
-			x, y, h, l = data
-			self._canvas.create_rectangle(x, y, h, l, fill='white')
+		"""Fill rectangle with white"""
+		x, y, h, l = data
+		self._canvas.create_rectangle(x, y, h, l, fill='white')
 
 	def config_progress(self,charge):
+		"""Config charging progress at given charge"""
 		if charge==6:
 			for coordinate in range(6):
 				self.fill_rectangle_blank(list(self.canvas_coordinate[coordinate]))
@@ -205,18 +231,15 @@ class IntervalBar(tk.Canvas):
 
 			for coordinate in range(charge):
 				self.fill_rectangle_blue(list(self.canvas_coordinate[coordinate]))
-# if self.count < self.numBar:
-		#
-		# 	self.count += 1
-		# else:
-		# 	self.count = 0
-		# 	self.fill_rectangle_blank(self.canvas_coordinate)
+
 
 	def get_turn(self):
+		"""(int)Return the progress move"""
 		return self.count
 
 
 class EskimoCompanion(AbstractCompanion):
+	"""A class that builds function for EskimoCompanion"""
 	NAME = 'Eskimo'
 
 	def __init__(self):
@@ -238,6 +261,7 @@ class EskimoCompanion(AbstractCompanion):
         """
 
 		def get_companion_dot():
+			"""Return generator"""
 			for position ,dots in game.grid.items():
 				if dots.get_dot() is not None and isinstance(dots.get_dot(),SwirlDot):
 						yield (position,dots.get_dot())
@@ -251,20 +275,9 @@ class EskimoCompanion(AbstractCompanion):
 				except AttributeError:
 					pass
 			positionList.append(pos)
-		# print(set(positionList))
+
 		return game.activate_all(set(positionList))
 
-			# print("pos::{0}::::dts::{1}::::".format(pos,dts))
-		# print("acctivi")
-		# for data in game.activate_all((1,1)):
-		# 	print(data)
-		# print("call times")
-		# print(list(get_companion_dot()))
-		# print(p for p,ds in get_companion_dot())
-		# print(game.grid.get_adjacent_cells({}))
-		# for data in game.activate_all({(1, 1), (4, 6)}):
-		# 	# print(data)
-		# 	pass
 
 
 class SwirlDot(BasicDot):
@@ -285,12 +298,10 @@ class DotsApp:
             master (tk.Tk|tk.Frame): The parent widget
         """
 
-		# ------------------------
 		self.charge = 0
 		self._info_panel = InfoPanel(master)
 		self._interval_bar = IntervalBar(master, 60, 6, (80, 80))
 		self._menu(master)
-		# --------------------------
 		self._master = master
 
 		self._playing = True
@@ -304,7 +315,6 @@ class DotsApp:
 		objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
 		self._objectives = ObjectiveManager(objectives)
-		# --------------------------------
 
 		self._objectivesView = ObjectivesView(master,
 											  image_manager=self._image_manager)
@@ -312,14 +322,12 @@ class DotsApp:
 			self._info_panel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
 										data[1],
 										data[0])
-		# --------------------------------
 		# Game
 		dead_cells = {(2, 2), (2, 3), (2, 4),
 					  (3, 2), (3, 3), (3, 4),
 					  (4, 2), (4, 3), (4, 4),
 					  (0, 7), (1, 7), (6, 7), (7, 7)}
-		# self._game = DotGame({BasicDot: 1}, objectives=self._objectives, kinds=(1, 2, 3, 4), size=(8, 8),
-		#                      dead_cells=dead_cells)
+
 		self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
 								   kinds=(1, 2, 3, 4), size=(8, 8),
 								   dead_cells=dead_cells)
@@ -332,16 +340,7 @@ class DotsApp:
 			# print(position)
 			if position not in dead_cells:
 				self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
-		# for position ,dots in self._game.grid.items():
-		# 	print("position {0} :::: dots {1}".format(position,isinstance(dots.get_dot(),BasicDot)))
-				# print(self._game.grid[position].get_dot())
-		# self._game.grid[(4, 6)].set_dot(SwirlDot(1))
-		# self._game.grid[(1, 1)].set_dot(SwirlDot(1))
-		# for i in range(0, 4):
-		#     for j in range(0, 2):
-		#         position = i, j
-		#         self._game.grid[position].set_dot(BasicDot(3))
-		# self._game.grid[(7, 3)].set_dot(BasicDot(1))
+
 
 		# Grid View
 		self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
@@ -384,8 +383,7 @@ class DotsApp:
         Parameters:
             step_name (str): The name (type) of the step
         """
-		# self._drop_complete(step_name)
-		# print(step_name)
+
 		self._refresh_status()
 		self.draw_grid()
 
@@ -509,8 +507,6 @@ class DotsApp:
 
 	def _drop_complete(self):
 		"""Handles the end of a drop animation"""
-
-
 		self._game.companion.charge()
 		self._interval_bar.config_progress(self._game.companion.get_charge())
 		if self._playing:
@@ -519,37 +515,26 @@ class DotsApp:
 				self._game.companion.reset()
 				steps = self._game.companion.activate(self._game)
 				self._refresh_status()
-				# print(list(steps))
+
 				return self.animate(steps)
 			else:
 				self._interval_bar.config_progress(self._game.companion.get_charge())
-				# print(self._game.companion.charge())
-				# print(self._game.companion.get_charge())
-
-		# print("drop_complete :{}".format(self._game.is_resolving()))
 		return True
 
 	# Need to check whether the game is over
 
 	def _refresh_status(self):
 		"""Handles change in score"""
-
-		# Normally, this should raise the following error:
-		# raise NotImplementedError()
-		# But so that the game can work prior to this method being implemented,
-		# we'll just print some information
-		# Sometimes I believe Python ignores all my comments :(
 		score = self._game.get_score()
 		self._info_panel.set_score(score)
 		self._info_panel.set_docts_step(self._objectives.get_status())
 		self._info_panel.set_turns(self._game.get_moves())
-		# print("Score is now {}.".format(score))
-
 		if self._objectives.is_complete():
 			self._objectives.reset()
 			self.reset()
 
 	def _menu(self, master):
+		"""fileMenu bar on top"""
 		menubar = tk.Menu(master)
 		master.config(menu=menubar)
 
@@ -572,6 +557,7 @@ class DotsApp:
 	def load_game(self):
 		pass
 	def get_companion_dot(self):
+		"""Return companion dot required"""
 		for position ,dots in self._game.grid.items():
 			if dots.get_dot() is not None and isinstance(dots.get_dot(),SwirlDot):
 					yield (position,dots.get_dot())
