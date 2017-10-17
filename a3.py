@@ -37,12 +37,12 @@ __version__ = "1.1.1"
 def load_image_pil(image_id, size, prefix, suffix='.png'):
 	"""Returns a tkinter photo image
 
-    Parameters:
-        image_id (str): The filename identifier of the image
-        size (tuple<int, int>): The size of the image to load
-        prefix (str): The prefix to prepend to the filepath (i.e. root directory
-        suffix (str): The suffix to append to the filepath (i.e. file extension)
-    """
+	Parameters:
+		image_id (str): The filename identifier of the image
+		size (tuple<int, int>): The size of the image to load
+		prefix (str): The prefix to prepend to the filepath (i.e. root directory
+		suffix (str): The suffix to append to the filepath (i.e. file extension)
+	"""
 	width, height = size
 	file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
 	return ImageTk.PhotoImage(Image.open(file_path))
@@ -51,12 +51,12 @@ def load_image_pil(image_id, size, prefix, suffix='.png'):
 def load_image_tk(image_id, size, prefix, suffix='.gif'):
 	"""Returns a tkinter photo image
 
-    Parameters:
-        image_id (str): The filename identifier of the image
-        size (tuple<int, int>): The size of the image to load
-        prefix (str): The prefix to prepend to the filepath (i.e. root directory
-        suffix (str): The suffix to append to the filepath (i.e. file extension)
-    """
+	Parameters:
+		image_id (str): The filename identifier of the image
+		size (tuple<int, int>): The size of the image to load
+		prefix (str): The prefix to prepend to the filepath (i.e. root directory
+		suffix (str): The suffix to append to the filepath (i.e. file extension)
+	"""
 	width, height = size
 	file_path = os.path.join(prefix, f"{width}x{height}", image_id + suffix)
 	return tk.PhotoImage(file=file_path)
@@ -77,18 +77,17 @@ ANIMATION_DELAYS = {
 }
 
 
-
-
 # Define your classes here
 
 class InfoPanel(tk.Frame):
 	"""A class constructs moves, score, image, and objectives"""
+
 	def __init__(self, master):
 		"""Constructs information panel containing moves, score, image, and objectives
 
 		Parameters:
-		    ImageContainer(dict):a dict image being key, location being value
-		    DotsList(list): a list that stores dots and objectives
+			ImageContainer(dict):a dict image being key, location being value
+			DotsList(list): a list that stores dots and objectives
 		"""
 		self.ImageContainer = {}
 		self.DotsList = []
@@ -100,14 +99,14 @@ class InfoPanel(tk.Frame):
 		self.DotsFrame = tk.Frame(self.InfoFrame)
 
 		self.TurnsLabel = tk.Label(self.TurnsFrame,
-									 text="", font=(None, 30))
+								   text="", font=(None, 30))
 		# self.image_register(load_all=True)
 		# Set center image and score next to image
 
 		self.CenterImage = tk.Label(self.CompanionsFrame, text="",
-									   font=(None, 40),
-									   image=self.image_register("useless.gif").get_image("useless.gif"),
-									   compound="right")
+									font=(None, 40),
+									image=self.image_register("useless.gif").get_image("useless.gif"),
+									compound="right")
 
 		# Packing all the frames
 		self.InfoFrame.pack()
@@ -132,15 +131,16 @@ class InfoPanel(tk.Frame):
 	def set_status(self, image, move, objective):
 		"""Set objectives and dots to be right side """
 		self.StatusLabel = tk.Label(self.DotsFrame,
-									  image=image,
-									  text=move, compound="top")
+									image=image,
+									text=move, compound="top")
 		self.StatusLabel.pack(side=tk.RIGHT)
-		#--------------------------------------------------------
+		# --------------------------------------------------------
 		self.DotsList.append([objective.get_kind(),
-								   objective.get_name(),
-								   move,
-								   self.StatusLabel])
-		#--------------------------------------------------------
+							  objective.get_name(),
+							  move,
+							  self.StatusLabel])
+
+	# --------------------------------------------------------
 
 	def set_score(self, score):
 		"""Set score for playing"""
@@ -148,13 +148,13 @@ class InfoPanel(tk.Frame):
 
 	def set_dots_remaining(self, obj):
 		"""Refresh remaining dots after each move"""
-		#--------------------------------------------------------
+		# --------------------------------------------------------
 
 		for num in range(len(self.DotsList)):
 			if obj[num][1] is not self.DotsList[num][2]:
 				self.DotsList[num][3].config(text=obj[num][1])
 				self.DotsList[num][2] = obj[num][1]
-		# --------------------------------------------------------
+			# --------------------------------------------------------
 
 	# functionality
 	def image_register(self, image=None, load_all=False):
@@ -169,7 +169,7 @@ class InfoPanel(tk.Frame):
 			"eskimo.png": "images/companions/eskimo.png",
 			"goat.png": "images/companions/goat.png"
 		}
-		#--------------------------------------------------------
+		# --------------------------------------------------------
 
 		if image is None and not load_all:
 			raise KeyError("Sorry image id is important")
@@ -180,24 +180,22 @@ class InfoPanel(tk.Frame):
 			else:
 				self.ImageContainer[image] = tk.PhotoImage(file=images[image])
 				return self
-		#--------------------------------------------------------
-
-
-
+			# --------------------------------------------------------
 
 
 class IntervalBar(tk.Canvas):
 	"""A class that constructs progress bar"""
+
 	def __init__(self, master, length, num_of_rectangles, x=(0, 0)):
 		"""Constructs canvas for progressing bar
 
 		Parameters:
-		    ProgressCount(int): Number of progress after each move
-		    num_of_rectangles(int): An integer represents number of rectangle to draw
-		    length(int): Length of each small rectangle
-		    x(tuple):Starting point of rectangle
+			ProgressCount(int): Number of progress after each move
+			num_of_rectangles(int): An integer represents number of rectangle to draw
+			length(int): Length of each small rectangle
+			x(tuple):Starting point of rectangle
 		"""
-		#--------------------------------------------------------
+		# --------------------------------------------------------
 
 		self.ProgressCount = 0
 		self.num_of_rectangles = num_of_rectangles
@@ -208,7 +206,7 @@ class IntervalBar(tk.Canvas):
 			(X1 + length * i, Y1, X2 + length * (i + 1), Y2)
 			for i in range(0, num_of_rectangles)
 		]
-		#--------------------------------------------------------
+		# --------------------------------------------------------
 
 		self._canvas = tk.Canvas(master, bg="white",
 								 width=500, height=30)
@@ -234,9 +232,9 @@ class IntervalBar(tk.Canvas):
 		x, y, h, l = coordinate
 		self._canvas.create_rectangle(x, y, h, l, fill='white')
 
-	def config_progress(self,charge):
+	def config_progress(self, charge):
 		"""Config charging progress at given charge"""
-		if charge==6:
+		if charge == 6:
 
 			for coordinate in range(0, 6):
 				self.white_rectangle(list(self.canvas_coordinate[coordinate]))
@@ -245,15 +243,14 @@ class IntervalBar(tk.Canvas):
 			for coordinate in range(charge):
 				self.blue_rectangle(list(self.canvas_coordinate[coordinate]))
 
-
-
 	def get_turn(self):
 		"""(int)Return the progress move"""
 		return self.ProgressCount
 
 	# --------------------------------------------------------
 
-#--------------------------------------------------------
+
+# --------------------------------------------------------
 
 class EskimoCompanion(AbstractCompanion):
 	"""A class that builds function for EskimoCompanion"""
@@ -265,25 +262,26 @@ class EskimoCompanion(AbstractCompanion):
 	def activate(self, game):
 		"""Activates the companion's ability
 
-        Parameters:
-            game (DotGame): The game being player
+		Parameters:
+			game (DotGame): The game being player
 
-        Yield:
-            None: Once for each step in an animation
+		Yield:
+			None: Once for each step in an animation
 
-        Notes:
-            Typically, this method will return:
-                - game.activate_all(positions): If positions need to be activated
-                - None: If no animation needs to occur
-        """
+		Notes:
+			Typically, this method will return:
+				- game.activate_all(positions): If positions need to be activated
+				- None: If no animation needs to occur
+		"""
 
 		def get_companion_dot():
 			"""Return generator"""
-			for position ,dots in game.grid.items():
-				if dots.get_dot() is not None and isinstance(dots.get_dot(),SwirlDot):
-						yield (position,dots.get_dot())
-		positionList=[]
-		for pos,dts in get_companion_dot():
+			for position, dots in game.grid.items():
+				if dots.get_dot() is not None and isinstance(dots.get_dot(), SwirlDot):
+					yield (position, dots.get_dot())
+
+		positionList = []
+		for pos, dts in get_companion_dot():
 			for possition in game.grid.get_adjacent_cells(pos):
 				# print(dts.get_view_id().split("/")[1])
 				# print(game.grid[possition])
@@ -294,7 +292,9 @@ class EskimoCompanion(AbstractCompanion):
 			positionList.append(pos)
 
 		return game.activate_all(set(positionList))
-#--------------------------------------------------------
+
+
+# --------------------------------------------------------
 
 
 class SwirlDot(BasicDot):
@@ -311,15 +311,15 @@ class DotsApp:
 	def __init__(self, master):
 		"""Constructor
 
-        Parameters:
-            master (tk.Tk|tk.Frame): The parent widget
-        """
+		Parameters:
+			master (tk.Tk|tk.Frame): The parent widget
+		"""
 
 		self.charge = 0
 		self.InfoPanel = InfoPanel(master)
 		self.IntervalBar = IntervalBar(master, 60, 6, (80, 80))
 		self.menu(master)
-		self.master = master
+		self._master = master
 
 		self._playing = True
 
@@ -334,11 +334,11 @@ class DotsApp:
 		self._objectives = ObjectiveManager(objectives)
 		# --------------------------------------------------------
 		self.ObjectivesView = ObjectivesView(master,
-											  image_manager=self.ImageManager)
+											 image_manager=self.ImageManager)
 		for status in self._objectives.get_status():
 			self.InfoPanel.set_status(self.ObjectivesView.load_image(status[0], (20, 20)),
-										status[1],
-										status[0])
+									  status[1],
+									  status[0])
 		# --------------------------------------------------------
 		# Game
 		dead_cells = {(2, 2), (2, 3), (2, 4),
@@ -397,9 +397,9 @@ class DotsApp:
 	def _animation_step(self, step_name):
 		"""Runs for each step of an animation
 
-        Parameters:
-            step_name (str): The name (type) of the step
-        """
+		Parameters:
+			step_name (str): The name (type) of the step
+		"""
 
 		self._refresh_status()
 		self.draw_grid()
@@ -407,9 +407,9 @@ class DotsApp:
 	def animate(self, steps, callback=lambda: None):
 		"""Animates some steps (i.e. from selecting some dots, activating companion, etc.
 
-        Parameters:
-            steps (generator): Generator which yields step_name (str) for each step in the animation
-        """
+		Parameters:
+			steps (generator): Generator which yields step_name (str) for each step in the animation
+		"""
 
 		if steps is None:
 			steps = (None for _ in range(1))
@@ -422,10 +422,10 @@ class DotsApp:
 	def _drop(self, position):  # pylint: disable=unused-argument
 		"""Handles the dropping of the dragged connection
 
-        Parameters:
-            position (tuple<int, int>): The position where the connection was
-                                        dropped
-        """
+		Parameters:
+			position (tuple<int, int>): The position where the connection was
+										dropped
+		"""
 		if not self._playing:
 			return
 
@@ -440,10 +440,10 @@ class DotsApp:
 	def _connect(self, start, end):
 		"""Draws a connection from the start point to the end point
 
-        Parameters:
-            start (tuple<int, int>): The position of the starting dot
-            end (tuple<int, int>): The position of the ending dot
-        """
+		Parameters:
+			start (tuple<int, int>): The position of the starting dot
+			end (tuple<int, int>): The position of the ending dot
+		"""
 
 		if self._game.is_resolving():
 			return
@@ -455,19 +455,19 @@ class DotsApp:
 	def _undo(self, positions):
 		"""Removes all the given dot connections from the grid view
 
-        Parameters:
-            positions (list<tuple<int, int>>): The dot connects to remove
-        """
+		Parameters:
+			positions (list<tuple<int, int>>): The dot connects to remove
+		"""
 		for _ in positions:
 			self._grid_view.undo_connection()
 
 	def _drag(self, position):
 		"""Attempts to connect to the given position, otherwise draws a dragged
-        line from the start
+		line from the start
 
-        Parameters:
-            position (tuple<int, int>): The position to drag to
-        """
+		Parameters:
+			position (tuple<int, int>): The position to drag to
+		"""
 
 		if self._game.is_resolving():
 			return
@@ -505,8 +505,12 @@ class DotsApp:
 
 	def reset(self):
 		"""Resets the game"""
-		raise NotImplementedError()
-
+		self.draw_grid()
+		self.InfoPanel.set_score(0)
+		for i in range(0, 6):
+			self.IntervalBar.white_rectangle(list(self.IntervalBar.canvas_coordinate)[i])
+		self._objectives.reset()
+		self._playing = True
 	def check_game_over(self):
 		"""Checks whether the game is over and shows an appropriate message box if so"""
 		state = self._game.get_game_state()
@@ -536,12 +540,12 @@ class DotsApp:
 				self.IntervalBar.config_progress(self._game.companion.get_charge())
 		return True
 
-		# --------------------------------------------------------
+	# --------------------------------------------------------
 	# Need to check whether the game is over
 
 	def _refresh_status(self):
 		"""Handles change in score"""
-		
+
 		self.InfoPanel.set_score(self._game.get_score())
 		self.InfoPanel.set_moves(self._game.get_moves())
 		self.InfoPanel.set_dots_remaining(self._objectives.get_status())
@@ -566,27 +570,29 @@ class DotsApp:
 
 		filemenu.add_separator()
 		filemenu.add_command(label="Exit", underline=0, command=self.exit)
+		filemenu.add_command(label="Reset", command=self.reset)
 
-		# --------------------------------------------------------
+	# --------------------------------------------------------
 
 	def exit(self):
-		#I make changes here. Don't edit
+		# I make changes here. Don't edit
 		if askyesno('!', 'Do you wanna quit?'):
-			self.master.destroy()
+			self._master.destroy()
 
 		else:
 			showinfo('No')
 
 	def load_game(self):
 		pass
+
 	def get_companion_dot(self):
-		#I did not make changes here
+		# I did not make changes here
 		"""Return companion dot required"""
 		# --------------------------------------------------------
-		for position ,dots in self._game.grid.items():
-			if dots.get_dot() is not None and isinstance(dots.get_dot(),SwirlDot):
-					yield (position,dots.get_dot())
-		# --------------------------------------------------------
+		for position, dots in self._game.grid.items():
+			if dots.get_dot() is not None and isinstance(dots.get_dot(), SwirlDot):
+				yield (position, dots.get_dot())
+			# --------------------------------------------------------
 
 
 def main():

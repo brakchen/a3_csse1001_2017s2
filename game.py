@@ -61,7 +61,6 @@ class DotGrid(Matrix):
             tuple<-1, int>: If no such cell exists (i.e. position is a top-row cell)
         """
         row, column = position
-
         previous = None
         for row in range(row, -1, -1):
             position = row, column
