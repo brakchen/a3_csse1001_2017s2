@@ -343,7 +343,7 @@ class DotsApp:
                                    kinds=(1, 2, 3, 4), size=(8, 8),
                                    dead_cells=self.dead_cells)
 
-        self.set_up_compaino()
+        self.set_up_companion()
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
@@ -356,7 +356,7 @@ class DotsApp:
 
         # Set initial score again to trigger view update automatically
         self._refresh_status()
-    def set_up_compaino(self):
+    def set_up_companion(self):
         randomRow = [random.randint(1, 7) for num in range(4)]
         randomColumn = [random.randint(1, 7) for num in range(4)]
         eskimoCompanionPosition = set(zip(randomRow, randomColumn))
@@ -513,7 +513,7 @@ class DotsApp:
         self.setup_dot_status()
         self._game.reset()
         self._grid_view.draw(self._game.grid)
-        self.set_up_compaino()
+        self.set_up_companion()
 
 
 
@@ -572,18 +572,15 @@ class DotsApp:
     def _menu(self, master):
         """Constructs file menu"""
         menubar = tk.Menu(master)
-
+        master.config(menu=menubar)
         fileMenu = tk.Menu(menubar)
+        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
 
         fileMenu.add_command(label="New Game", command=self.reset)
         fileMenu.add_command(label="Exit", underline=0, command=lambda:
         self._master.destroy()
         if askyesno('Verify', 'Do you really wanna quit?')
         else showinfo('No', 'Welcome back'))
-
-        menubar.add_cascade(label="File", underline=0, menu=fileMenu)
-        master.config(menu=fileMenu)
-
 
 def main():
     """Sets-up the GUI for Dots & Co"""
