@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import random
+from tkinter.messagebox import showinfo, askyesno
 
 from companion import AbstractCompanion
 
@@ -93,7 +94,7 @@ companions_manager = {
 
 class InfoPanel(tk.Frame):
     def __init__(self, master):
-        self._image_dict = {}
+
         self._dots_list = []
         self._info_frame = tk.Frame(master)
         self._moves_frame = tk.Frame(self._info_frame)
@@ -106,10 +107,10 @@ class InfoPanel(tk.Frame):
                                      text="", font=(None, 30))
 
         # Set center image and score next to image
-
+        self._image = tk.PhotoImage(file="images/companions/useless.gif")
         self._useless_image = tk.Label(self._companion_frame, text="",
                                        font=(None, 40),
-                                       image=self.image_register("useless.gif").get_image("useless.gif"),
+                                       image=self._image,
                                        compound="right")
 
         # Packing all the frames
@@ -123,14 +124,8 @@ class InfoPanel(tk.Frame):
     def set_turns(self, turn):
         self._moves_label.config(text="{}".format(turn))
 
-    def get_image(self, image_id):
-        try:
-            return self._image_dict.get(image_id)
-        except:
-            raise KeyError("Sorry no image found")
-        
-    def set_image(self, image_id):
-        self._useless_image.config(image=image_id)
+    def set_score(self, score):
+        self._useless_image.config(text="{}".format(score))
 
     def set_status(self, image_id, count, obj):
 
@@ -144,36 +139,28 @@ class InfoPanel(tk.Frame):
                                 count,
                                 self._status_label])
 
-    def set_score(self, score):
-        self._useless_image.config(text="{}".format(score))
-
     def set_remaining_dots(self, obj):
         for num in range(len(self._dots_list)):
             if obj[num][1] is not self._dots_list[num][2]:
                 self._dots_list[num][3].config(text=obj[num][1])
                 self._dots_list[num][2] = obj[num][1]
 
-    # functionality
-    def image_register(self, image_id=None, load_all=False):
-        if image_id is None and not load_all:
-            raise KeyError("Sorry image id is important")
-        else:
-            if load_all:
-                for id, path in companions_manager.items():
-                    self._image_dict[id] = tk.PhotoImage(file=companions_manager[path])
-            else:
-                self._image_dict[image_id] = tk.PhotoImage(file=companions_manager[image_id])
-        return self
+    def reset_infopanel(self):
+        self.set_turns(20)
 
 
 class IntervalBar(tk.Canvas):
     def __init__(self, master):
-        self._coordinate = -1
 
         self._canvas = tk.Canvas(master, bg="white",
                                  width=500, height=30)
         self._canvas.pack(side=tk.TOP)
-
+        self._canvas_coordinate = [(80, 10, 140, 30),
+                                   (140, 10, 200, 30),
+                                   (200, 10, 260, 30),
+                                   (260, 10, 320, 30),
+                                   (320, 10, 380, 30),
+                                   (380, 10, 440, 30)]
         self.draw_rectangle()
 
     def draw_rectangle(self):
@@ -191,57 +178,37 @@ class IntervalBar(tk.Canvas):
 
     def fill_rectangle_blank(self, coordinate):
         x, y, z, w = coordinate
-        self._canvas.create_rectangle(x, y, h, l, fill='white')
+        self._canvas.create_rectangle(x, y, z, w, fill='white')
 
-    def changing_progress(self):
-        if self._coordinate == 5:
-            
-            self._canvas.fill_rectangle_blank(80, 10, 140, 30)
-            self._canvas.fill_rectangle_blank(140, 10, 200, 30)
-            self._canvas.fill_rectangle_blank(200, 10, 260, 30)
-            self._canvas.fill_rectangle_blank(260, 10, 320, 30)
-            self._canvas.fill_rectangle_blank(320, 10, 380, 30)
-            self._canvas.fill_rectangle_blank(380, 10, 440, 30)
-            self._coordinate = -1
-            
-        canvas_coordinate = [(80, 10, 140, 30),
-                             (140, 10, 200, 30),
-                             (200, 10, 260, 30),
-                             (260, 10, 320, 30),
-                             (320, 10, 380, 30),
-                             (380, 10, 440, 30)]
-        self._coordinate += 1
+    def changing_progress(self, charge):
+        if charge == 6:
+            for coordinate in self._canvas_coordinate:
+                x, y, z, w = coordinate
+                self.fill_rectangle_blank(coordinate)
+        else:
+            for i in range(charge):
+                self.fill_rectangle_blue(self._canvas_coordinate[i])
 
-        self.fill_rectangle_blue(canvas_coordinate[self._coordinate])
-            
+    def reset_interval_bar(self):
+        for coordinate in self._canvas_coordinate:
+            x, y, z, w = coordinate
+            self.fill_rectangle_blank(coordinate)
 
-class EskimoCompanion(AbstractCompanion):
-    NAME = 'Eskimo'
+
+
+class BuffaloCompanion(AbstractCompanion):
+    NAME = 'Buffalo'
 
     def __init__(self):
         super().__init__()
 
     def activate(self, game):
-        """Activates the companion's ability
+        pass
+class WildcardDot(BasicDot):
+    DOT_NAME = "wildcard"
 
-        Parameters:
-            game (DotGame): The game being player
-
-        Yield:
-            None: Once for each step in an animation
-
-        Notes:
-            Typically, this method will return:
-                - game.activate_all(positions): If positions need to be activated
-                - None: If no animation needs to occur
-        """
-        if game.companion.get_charge() == game.companion.get_max_charge():
-            return game.activate_all()
-
-
-class SwirlDot(BasicDot):
-    DOT_NAME = "swirl"
-    pass
+    def can_connect(self):
+        return False
 
 
 # You may edit as much of DotsApp as you wish
@@ -273,7 +240,7 @@ class DotsApp:
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-        self._objectives = ObjectiveManager(objectives)
+        self._objectives = ObjectiveManager(list(objectives))
         
 
         self._objectivesView = ObjectivesView(master,
@@ -288,25 +255,25 @@ class DotsApp:
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
-        self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
+        self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
                                    kinds=(1, 2, 3, 4), size=(8, 8),
                                    dead_cells=dead_cells)
         # The following code may be useful when you are implementing task 2:
-        
-        randomRow = [random.randint(1, 7) for num in range(4)]
-        randomColumn = [random.randint(1, 7) for num in range(4)]
-        eskimoCompanionPosition = set(zip(randomRow, randomColumn))
 
-        for position in eskimoCompanionPosition:
 
+        row_list = []
+        column_list = []
+        for a in range(0, 7):
+            row_list.append(a)
+        for b in range(0, 7):
+            column_list.append(b)
+        random.shuffle(row_list)
+        random.shuffle(column_list)
+        position_list = set(zip(row_list, column_list))
+
+        for position in position_list:
             if position not in dead_cells:
-                self._game.grid[position].set_dot(SwirlDot(random.randint(1,5)))
-
-        # for i in range(0, 4):
-        #     for j in range(0, 2):
-        #         position = i, j
-        #         self._game.grid[position].set_dot(BasicDot(3))
-        # self._game.grid[(7, 3)].set_dot(BasicDot(1))
+                self._game.grid[position].set_dot(WildcardDot("wildcard"))
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
@@ -455,8 +422,14 @@ class DotsApp:
 
     def reset(self):
         """Resets the game"""
-        pass
-        raise NotImplementedError()
+        self._game.reset()
+
+        self.draw_grid()
+        self._objectives.reset()
+
+        self._infopanel.reset_infopanel()
+        self._intervalbar.reset_interval_bar()
+
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -472,24 +445,28 @@ class DotsApp:
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-
-        self._intervalbar.changing_progress()
         self._game.companion.charge()
-        # Useful for when implementing a companion
-        if self._game.companion.is_fully_charged():
-            self._game.companion.reset()
-            steps = self._game.companion.activate(self._game)
-            self._refresh_status()
-
-            return self.animate(steps)
-
-        print(self._game.companion.get_charge())
+        self._intervalbar.changing_progress(self._game.companion.get_charge())
 
         if self._playing:
-            print("drop_complete :{}".format(self._game.is_resolving()))
-            return True
+            if self._game.companion.is_fully_charged():
+                self._intervalbar.changing_progress(6)
+                self._game.companion.reset()
+                self._intervalbar.changing_progress(0)
+                self._intervalbar.reset_interval_bar()
+                steps = self._game.companion.activate(self._game)
+                self._refresh_status()
+                return self.animate(steps)
+            else:
+                self._intervalbar.changing_progress(self._game.companion.get_charge())
 
-            # Need to check whether the game is over
+        if self._objectives.is_complete():
+            if askyesno('Verify', '？？？?'):
+                self._master.destroy()
+            else:
+                self.reset()
+        return True
+
 
     def _refresh_status(self):
         """Handles change in score"""
