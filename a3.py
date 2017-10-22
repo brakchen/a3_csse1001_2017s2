@@ -24,7 +24,7 @@ except ImportError:
 
 from view import GridView, ObjectivesView
 from game import DotGame, ObjectiveManager, CompanionGame
-from dot import BasicDot
+from dot import BasicDot, WildcardDot
 from util import create_animation, ImageManager
 
 # Fill these in with your details
@@ -204,11 +204,7 @@ class BuffaloCompanion(AbstractCompanion):
 
     def activate(self, game):
         pass
-class WildcardDot(BasicDot):
-    DOT_NAME = "wildcard"
 
-    def can_connect(self):
-        return False
 
 
 # You may edit as much of DotsApp as you wish
@@ -273,7 +269,7 @@ class DotsApp:
 
         for position in position_list:
             if position not in dead_cells:
-                self._game.grid[position].set_dot(WildcardDot("wildcard"))
+                self._game.grid[position].set_dot(WildcardDot())
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
