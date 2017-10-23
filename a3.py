@@ -27,7 +27,7 @@ from dot import BasicDot
 from util import create_animation, ImageManager
 
 # Fill these in with your details
-__author__ = "Zian Wang (s4457600)"
+__author__ = "Yuqi Yao"
 __email__ = ""
 __date__ = ""
 
