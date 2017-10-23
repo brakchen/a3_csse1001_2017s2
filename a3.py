@@ -77,17 +77,6 @@ ANIMATION_DELAYS = {
     'ANIMATION_STEP': 200
 }
 
-companions_manager = {
-    "useless.gif": "images/companions/useless.gif",
-    "penguin.gif": "images/companions/penguin.gif",
-    "penguin.png": "images/companions/penguin.png",
-    "penguin_large.png": "images/companions/penguin_large.png",
-    "buffalo_large.png": "images/companions/buffalo_large.png",
-    "deer_large.png": "images/companions/deer_large.png",
-    "eskimo.png": "images/companions/eskimo.png",
-    "goat.png": "images/companions/goat.png",
-
-}
 
 
 # Define your classes here
@@ -134,19 +123,12 @@ class InfoPanel(tk.Frame):
                                       text=count, compound="top")
         self._status_label.pack(side=tk.RIGHT)
 
-        self._dots_list.append([obj.get_kind(),
-                                obj.get_name(),
-                                count,
-                                self._status_label])
+        self._dots_list.append(self._status_label)
 
     def set_remaining_dots(self, obj):
-        for num in range(len(self._dots_list)):
-            if obj[num][1] is not self._dots_list[num][2]:
-                self._dots_list[num][3].config(text=obj[num][1])
-                self._dots_list[num][2] = obj[num][1]
+        for laebl,length in zip(self._dots_list,range(len(self._dots_list))):
+            laebl.config(text=obj[length][1])
 
-    def reset_infopanel(self):
-        self.set_turns(20)
 
 
 class IntervalBar(tk.Canvas):
@@ -218,7 +200,6 @@ class DotsApp:
             master (tk.Tk|tk.Frame): The parent widget
         """
 
-        
         self._charge = 0
         self._infopanel = InfoPanel(master)
         self._intervalbar = IntervalBar(master)
@@ -422,15 +403,15 @@ class DotsApp:
 
         self.draw_grid()
         self._objectives.reset()
-
-        self._infopanel.reset_infopanel()
+        self._infopanel.set_turns(self._game.get_moves())
         self._intervalbar.reset_interval_bar()
+        self._infopanel.set_remaining_dots(self._objectives.get_status())
+
 
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
         state = self._game.get_game_state()
-
         if state == self._game.GameState.WON:
             showinfo("Game Over!", "You won!!!")
             self._playing = False
@@ -445,16 +426,16 @@ class DotsApp:
         self._intervalbar.changing_progress(self._game.companion.get_charge())
 
         if self._playing:
-            if self._game.companion.is_fully_charged():
-                self._intervalbar.changing_progress(6)
-                self._game.companion.reset()
-                self._intervalbar.changing_progress(0)
-                self._intervalbar.reset_interval_bar()
-                steps = self._game.companion.activate(self._game)
-                self._refresh_status()
-                return self.animate(steps)
-            else:
-                self._intervalbar.changing_progress(self._game.companion.get_charge())
+            # if self._game.companion.is_fully_charged():
+            #     self._intervalbar.changing_progress(6)
+            #     self._game.companion.reset()
+            #     self._intervalbar.changing_progress(0)
+            #     self._intervalbar.reset_interval_bar()
+            #     steps = self._game.companion.activate(self._game)
+            #     self._refresh_status()
+            #     return self.animate(steps)
+            # else:
+            self._intervalbar.changing_progress(self._game.companion.get_charge())
 
         if self._objectives.is_complete():
             if askyesno('Verify', '？？？?'):
