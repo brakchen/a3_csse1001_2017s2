@@ -520,13 +520,13 @@ class DotsApp:
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-        if not self.check_game_over():
-            if self._cheating_button.get_button_status():
-                self._playing=False
-            else:
-                self._playing=True
+        self.check_game_over()
 
         if self._playing:
+            if self._cheating_button.get_button_status():
+                self._playing = False
+            else:
+                self._playing = True
             self._game.companion.charge()
             self._intervalbar.changing_progress(self._game.companion.get_charge())
             if self._game.companion.is_fully_charged():
@@ -538,12 +538,15 @@ class DotsApp:
                 self._cheating_button.disable_cheating_button()
             else:
                 self._cheating_button.activate_cheating_button()
-
-        if self._objectives.is_complete():
-            if askyesno('Verify', '？？？?'):
-                self._master.destroy()
-            else:
+        else:
+            self._cheating_button.disable_cheating_button()
+            if askyesno('Verify', 'Do you want to play again?'):
                 self.reset()
+            else:
+                self._master.destroy()
+
+
+
 
 
         return True
