@@ -145,6 +145,7 @@ class InfoPanel(tk.Frame):
                               move,
                               self.StatusLabel])
     def reset_status(self):
+        """The method only use to reset the packed dot frame"""
         for data in self.DotsList:
             data[-1].pack_forget()
         self.DotsList.clear()
@@ -254,7 +255,9 @@ class IntervalBar(tk.Canvas):
     def get_turn(self):
         """(int)Return the progress move"""
         return self.ProgressCount
+
     def unpack_rectangle(self):
+        """The method use to redraw the rectangle once needed"""
         for coordinate in self.canvas_coordinate:
             x, y, h, l = coordinate
             self._canvas.create_rectangle(x, y, h, l, fill='white')
@@ -265,6 +268,7 @@ class EskimoCompanion(AbstractCompanion):
     NAME = 'Eskimo'
 
     def __init__(self):
+        """inherit super class"""
         super().__init__()
 
     def activate(self, game):
@@ -283,7 +287,10 @@ class EskimoCompanion(AbstractCompanion):
         """
 
         def get_companion_dot():
-            """Return generator"""
+            """Return generator that contain postion and dots
+                Yield:
+                	generator<tupe(position,dot)>:The postion where the dots put and,and the specifc dot want to be added
+            """
             for position, dots in game.grid.items():
                 if dots.get_dot() is not None and isinstance(dots.get_dot(), SwirlDot):
                     yield (position, dots.get_dot())
@@ -304,20 +311,12 @@ class CompanionDot(BasicDot):
 
     DOT_NAME = "Companion"
 
-    def activate(self, position, game, activated, has_loop=False):
-        self._expired = True
-
-    def adjacent_activated(self, position, game, activated, activated_neighbours, has_loop=False):
-        pass
-
-    def after_resolved(self, position, game):
-        pass
-
     def get_view_id(self):
         """(str) Returns a string to identify the image for this dot"""
         return "{}/{}".format(self.get_name(), + self.get_kind())
 
     def can_connect(self):
+        """(Boolean) Return the dot can be connected or not"""
         return True
 
 
@@ -325,6 +324,7 @@ class SwirlDot(BasicDot):
     DOT_NAME = "swirl"
 
     def can_connect(self):
+        """(Boolean) Return the dot can be connected or not"""
         return False
 
 
@@ -392,13 +392,13 @@ class DotsApp:
 
 
     def reset_dots_status(self):
-
+        """re-load the objectiveview on inforpanel"""
         for status in self._objectives.get_status():
             self.InfoPanel.set_status(self.ObjectivesView.load_image(status[0], (20, 20)),
                                         status[1],
                                         status[0])
     def reset_companion_status(self):
-
+        """reset the companion status;it is usually use regenerate the companoion into grid"""
         RandomRow = [random.randint(1, 7) for num in range(4)]
         RandomColumn = [random.randint(1, 7) for num in range(4)]
         EskimoCompanionPosition = set(zip(RandomRow, RandomColumn))
@@ -582,11 +582,7 @@ class DotsApp:
                 else:
                     self.IntervalBar.config_progress(self._game.companion.get_charge())
         else:
-            # if self._objectives.is_complete():
-            #     if askyesno('Verify', 'Do you want to play again?'):
-            #         self._playing = True
-            #     else:
-            #         self._master.destroy()
+
             if askyesno('Verify', 'Do you want to play again?'):
                 self.reset()
                 self._playing=True
@@ -619,12 +615,9 @@ class DotsApp:
         filemenu.add_command(label="Exit", underline=0, command=self.exit)
 
     def exit(self):
-
+        """The exit function on the menu"""
         if askyesno('!', 'Do you wanna quit?'):
             self._master.destroy()
-
-        else:
-            showinfo('No')
 
 
     def get_companion_dot(self):
