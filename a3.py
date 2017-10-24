@@ -97,6 +97,7 @@ class InfoPanel(tk.Frame):
 
         # Set center image and score next to image
         self._image = tk.PhotoImage(file="images/companions/useless.gif")
+        self._image.configure(width=500, height=500)
         self._useless_image = tk.Label(self._companion_frame, text="",
                                        font=(None, 40),
                                        image=self._image,
@@ -156,7 +157,7 @@ class IntervalBar(tk.Canvas):
 
     def fill_rectangle_blue(self, coordinate):
         x, y, z, w = coordinate
-        self._canvas.create_rectangle(x, y, z, w, fill='blue')
+        self._canvas.create_rectangle(x, y, z, w, fill='#508ebf')
 
     def fill_rectangle_blank(self, coordinate):
         x, y, z, w = coordinate
@@ -200,12 +201,25 @@ class DotsApp:
             master (tk.Tk|tk.Frame): The parent widget
         """
 
+        self._master = master
+        master.title("Dots & Co")
+        master.bind("<Control-n>", self.evt_reset)
+
+        scrollbar = tk.Scrollbar(master)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        listbox = tk.Listbox(master, yscrollcommand=scrollbar.set)
+
+        listbox.pack(side=tk.LEFT, fill=tk.BOTH)
+
+        scrollbar.config(command=listbox.yview)
+
         self._charge = 0
-        self._infopanel = InfoPanel(master)
+        self._infopanel = InfoPanel(listbox)
         self._intervalbar = IntervalBar(master)
         self.menu(master)
-        
-        self._master = master
+
+
 
         self._playing = True
 
@@ -227,17 +241,28 @@ class DotsApp:
                                        data[1],data[0])
         
         # Game
-        dead_cells = {(2, 2), (2, 3), (2, 4),
+        self._dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
         self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
                                    kinds=(1, 2, 3, 4), size=(8, 8),
-                                   dead_cells=dead_cells)
+                                   dead_cells=self._dead_cells)
         # The following code may be useful when you are implementing task 2:
+        self.set_wildcard_dot()
 
+        # Grid View
+        self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
+        self._grid_view.pack()
+        self._grid_view.draw(self._game.grid)
+        self.draw_grid_borders()
 
+        # Events
+        self.bind_events()
+        self._refresh_status()
+
+    def set_wildcard_dot(self):
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -249,21 +274,8 @@ class DotsApp:
         position_list = set(zip(row_list, column_list))
 
         for position in position_list:
-            if position not in dead_cells:
+            if position not in self._dead_cells:
                 self._game.grid[position].set_dot(WildcardDot())
-
-        # Grid View
-        self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
-        self._grid_view.pack()
-        self._grid_view.draw(self._game.grid)
-        self.draw_grid_borders()
-
-        # Events
-        self.bind_events()
-
-
-        self._refresh_status()
-
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
 
@@ -400,15 +412,14 @@ class DotsApp:
     def reset(self):
         """Resets the game"""
         self._game.reset()
-
+        self.set_wildcard_dot()
         self.draw_grid()
         self._objectives.reset()
         self._infopanel.set_turns(self._game.get_moves())
         self._intervalbar.reset_interval_bar()
         self._infopanel.set_remaining_dots(self._objectives.get_status())
-
-
-
+    def evt_reset(self, event):
+        self.reset()
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
         state = self._game.get_game_state()
@@ -422,20 +433,14 @@ class DotsApp:
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-        self._game.companion.charge()
-        self._intervalbar.changing_progress(self._game.companion.get_charge())
-
         if self._playing:
-            # if self._game.companion.is_fully_charged():
-            #     self._intervalbar.changing_progress(6)
-            #     self._game.companion.reset()
-            #     self._intervalbar.changing_progress(0)
-            #     self._intervalbar.reset_interval_bar()
-            #     steps = self._game.companion.activate(self._game)
-            #     self._refresh_status()
-            #     return self.animate(steps)
-            # else:
+            self._game.companion.charge()
             self._intervalbar.changing_progress(self._game.companion.get_charge())
+            if self._game.companion.is_fully_charged():
+                self.set_wildcard_dot()
+                self._intervalbar.changing_progress(0)
+                self._game.companion.reset()
+                self._refresh_status()
 
         if self._objectives.is_complete():
             if askyesno('Verify', '？？？?'):
@@ -447,7 +452,6 @@ class DotsApp:
 
     def _refresh_status(self):
         """Handles change in score"""
-
         score = self._game.get_score()
         self._infopanel.set_score(score)
         self._infopanel.set_remaining_dots(self._objectives.get_status())
@@ -463,6 +467,8 @@ class DotsApp:
         self._file_menu = tk.Menu(self._menu)
         self._menu.add_cascade(label="File", menu=self._file_menu)
         self._file_menu.add_command(label="New Game", command=self.reset)
+        self._file_menu.add_command(label="Eskimo Game", command=self.load_eskimo_game)
+        self._file_menu.add_command(label="Buffalo Game", command=self.load_buffalo_game)
         self._file_menu.add_separator()
         self._file_menu.add_command(label="Exit", command=self.exit_game)
 
@@ -474,6 +480,10 @@ class DotsApp:
             self._master.destroy()
         else:
             return True
+    def load_eskimo_game(self):
+        pass
+    def load_buffalo_game(self):
+        pass
 
 
 def main():
