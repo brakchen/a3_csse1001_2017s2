@@ -111,7 +111,7 @@ class InfoPanel(tk.Frame):
 									font=(None, 40),
 									image=self.image_register("useless.gif").get_image("useless.gif"),
 									compound="right",
-									width=200,
+									width=300,
 									height=150)
 
 		# Packing all the frames
