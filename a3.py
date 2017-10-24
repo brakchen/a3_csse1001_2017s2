@@ -176,7 +176,34 @@ class IntervalBar(tk.Canvas):
             x, y, z, w = coordinate
             self.fill_rectangle_blank(coordinate)
 
+class SwirlDot(BasicDot):
+    DOT_NAME = "swirl"
 
+    def can_connect(self):
+        return False
+
+
+
+class CompanionDot(BasicDot):
+    """A companion dot"""
+
+    DOT_NAME = "Companion"
+
+    def activate(self, position, game, activated, has_loop=False):
+        self._expired = True
+
+    def adjacent_activated(self, position, game, activated, activated_neighbours, has_loop=False):
+        pass
+
+    def after_resolved(self, position, game):
+        pass
+
+    def get_view_id(self):
+        """(str) Returns a string to identify the image for this dot"""
+        return "{}/{}".format(self.get_name(), + self.get_kind())
+
+    def can_connect(self):
+        return True
 
 class BuffaloCompanion(AbstractCompanion):
     NAME = 'Buffalo'
@@ -187,6 +214,42 @@ class BuffaloCompanion(AbstractCompanion):
     def activate(self, game):
         pass
 
+class EskimoCompanion(AbstractCompanion):
+    """A class that builds function for EskimoCompanion"""
+    NAME = 'Eskimo'
+
+    def __init__(self):
+        super().__init__()
+
+    def activate(self, game):
+        """Activates the companion's ability
+
+        Parameters:
+            game (DotGame): The game being player
+
+        Yield:
+            None: Once for each step in an animation
+
+        Notes:
+            Typically, this method will return:
+                - game.activate_all(positions): If positions need to be activated
+                - None: If no animation needs to occur
+        """
+
+        dot_container = {}
+        for position, dots in game.grid.items():
+            if dots.get_dot() is not None and isinstance(dots.get_dot(), SwirlDot):
+                dot_container[position] = dots.get_dot()
+
+        position_list = []
+        for pos, dots in dot_container.items():
+            for position in game.grid.get_adjacent_cells(pos):
+                try:
+                    game.grid[position].set_dot(BasicDot(int(dots.get_view_id().split("/")[1])))
+                except AttributeError:
+                    pass
+            position_list.append(pos)
+        return game.activate_all(set(position_list))
 
 
 # You may edit as much of DotsApp as you wish
@@ -203,7 +266,7 @@ class DotsApp:
         self._master = master
         master.title("Dots & Co")
         master.bind("<Control-n>", self.evt_reset)
-        self._gamemode = "Basic Dots"
+        self._game_mode = "Eskimo"
         self._charge = 0
         self._infopanel = InfoPanel(master)
         self._intervalbar = IntervalBar(master)
@@ -234,16 +297,21 @@ class DotsApp:
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
         self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
-                                   kinds=(1, 2, 3, 4), size=(8, 8),
-                                   dead_cells=self._dead_cells)
-        # The following code may be useful when you are implementing task 2:
+                                        kinds=(1, 2, 3, 4), size=(8, 8),
+                                        dead_cells=self._dead_cells)
         self.set_wildcard_dot()
+
+
+        # The following code may be useful when you are implementing task 2:
+
 
         # Grid View
         self._grid_view = GridView(master, size=self._game.grid.size(), image_manager=self._image_manager)
         self._grid_view.pack()
         self._grid_view.draw(self._game.grid)
         self.draw_grid_borders()
+
+        self._cheating_button = CheatingButton(master)
 
         # Events
         self.bind_events()
@@ -263,6 +331,21 @@ class DotsApp:
         for position in position_list:
             if position not in self._dead_cells:
                 self._game.grid[position].set_dot(WildcardDot())
+
+    def set_swirl_dot(self):
+        row_list = []
+        column_list = []
+        for a in range(0, 7):
+            row_list.append(a)
+        for b in range(0, 7):
+            column_list.append(b)
+        random.shuffle(row_list)
+        random.shuffle(column_list)
+        position_list = set(zip(row_list, column_list))
+
+        for position in position_list:
+            if position not in self._dead_cells:
+                self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
     def draw_grid_borders(self):
         """Draws borders around the game grid"""
 
@@ -399,12 +482,17 @@ class DotsApp:
     def reset(self):
         """Resets the game"""
         self._game.reset()
-        self.set_wildcard_dot()
+        if self._game_mode == "Buffalo":
+            self.set_wildcard_dot()
+        else:
+            self.set_swirl_dot()
+
         self.draw_grid()
         self._objectives.reset()
         self._infopanel.set_turns(self._game.get_moves())
         self._intervalbar.reset_interval_bar()
         self._infopanel.set_remaining_dots(self._objectives.get_status())
+
     def evt_reset(self, event):
         self.reset()
     def check_game_over(self):
@@ -424,10 +512,9 @@ class DotsApp:
             self._game.companion.charge()
             self._intervalbar.changing_progress(self._game.companion.get_charge())
             if self._game.companion.is_fully_charged():
-                self.set_wildcard_dot()
-                self._intervalbar.changing_progress(0)
                 self._game.companion.reset()
-                self._refresh_status()
+                self._intervalbar.changing_progress(0)
+                self.set_wildcard_dot()
 
         if self._objectives.is_complete():
             if askyesno('Verify', '？？？?'):
@@ -435,7 +522,6 @@ class DotsApp:
             else:
                 self.reset()
         return True
-
 
     def _refresh_status(self):
         """Handles change in score"""
@@ -471,6 +557,33 @@ class DotsApp:
         pass
     def load_buffalo_game(self):
         pass
+
+
+class CheatingButton(tk.Frame):
+
+    def __init__(self, master):
+        self._cheating_chances = 0
+        self._cheating_button = tk.Button(master, text="Chances remaing ({})".format(self._cheating_chances),
+                                          command=None)
+        self._cheating_button.pack()
+
+        self._cheating = True
+
+    def disable_cheating_button(self):
+        self._cheating_button.configure(state="disabled")
+
+    def activate_cheating_button(self):
+
+        self._cheating_button.configure(state="normal")
+
+    def cheating(self):
+        self._cheating_chances -= 1
+        self.disable_cheating_button()
+
+        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
+        if self._cheating_chances == 0:
+            self.disable_cheating_button()
+
 
 
 def main():
