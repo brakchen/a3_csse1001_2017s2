@@ -97,7 +97,6 @@ class InfoPanel(tk.Frame):
 
         # Set center image and score next to image
         self._image = tk.PhotoImage(file="images/companions/useless.gif")
-        self._image.configure(width=500, height=500)
         self._useless_image = tk.Label(self._companion_frame, text="",
                                        font=(None, 40),
                                        image=self._image,
@@ -204,23 +203,11 @@ class DotsApp:
         self._master = master
         master.title("Dots & Co")
         master.bind("<Control-n>", self.evt_reset)
-
-        scrollbar = tk.Scrollbar(master)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        listbox = tk.Listbox(master, yscrollcommand=scrollbar.set)
-
-        listbox.pack(side=tk.LEFT, fill=tk.BOTH)
-
-        scrollbar.config(command=listbox.yview)
-
+        self._gamemode = "Basic Dots"
         self._charge = 0
-        self._infopanel = InfoPanel(listbox)
+        self._infopanel = InfoPanel(master)
         self._intervalbar = IntervalBar(master)
         self.menu(master)
-
-
-
         self._playing = True
 
         self._image_manager = ImageManager('images/dots/', loader=load_image)
