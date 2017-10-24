@@ -289,7 +289,7 @@ class DotsApp:
         for data in self._objectives.get_status():
             self._infopanel.set_status(self._objectivesView.load_image(data[0], (20, 20)),
                                        data[1],data[0])
-        
+        self._size=(8, 8)
         # Game
         self._dead_cells = {(2, 2), (2, 3), (2, 4),
                       (3, 2), (3, 3), (3, 4),
@@ -297,7 +297,7 @@ class DotsApp:
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
         self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
-                                        kinds=(1, 2, 3, 4), size=(8, 8),
+                                        kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
         self.set_wildcard_dot()
 
@@ -386,10 +386,11 @@ class DotsApp:
         Parameters:
             steps (generator): Generator which yields step_name (str) for each step in the animation
         """
-
         if steps is None:
             steps = (None for _ in range(1))
 
+
+        # print(list(steps))
         animation = create_animation(self._master, steps,
                                      delays=ANIMATION_DELAYS, delay=DEFAULT_ANIMATION_DELAY,
                                      step=self._animation_step, callback=callback)
@@ -402,6 +403,7 @@ class DotsApp:
             position (tuple<int, int>): The position where the connection was
                                         dropped
         """
+
         if not self._playing:
             return
 
@@ -444,7 +446,16 @@ class DotsApp:
         Parameters:
             position (tuple<int, int>): The position to drag to
         """
+        if self._cheating_button.get_button_status():
 
+            a,b=position
+            a1,b1=self._size
+            if a<=a1 or b<=b1 and position not in self._dead_cells:
+                if  self._cheating_button.get_button_status():
+                    self.animate(self._game.activate_all({position}))
+                    self._cheating_button.set_button_state(False)
+
+        # self._grid_view.draw(self._game.grid)
         if self._game.is_resolving():
             return
         if not self._playing:
@@ -470,10 +481,11 @@ class DotsApp:
         if start:
             self._grid_view.draw_dragged_connection(start, position, kind)
 
-    @staticmethod
-    def remove(*_):
-        """Deprecated in 1.1.0"""
-        raise DeprecationWarning("Deprecated in 1.1.0")
+    def remove(self, *positions):
+        """Attempts to remove the tiles at the given positions
+        """
+        raise DeprecationWarning()
+
 
     def draw_grid(self):
         """Draws the grid"""
@@ -508,19 +520,32 @@ class DotsApp:
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
+        if not self.check_game_over():
+            if self._cheating_button.get_button_status():
+                self._playing=False
+            else:
+                self._playing=True
+
         if self._playing:
             self._game.companion.charge()
             self._intervalbar.changing_progress(self._game.companion.get_charge())
             if self._game.companion.is_fully_charged():
+                self._cheating_button.update_chance()
                 self._game.companion.reset()
                 self._intervalbar.changing_progress(0)
                 self.set_wildcard_dot()
+            if self._cheating_button.get_change()<=0:
+                self._cheating_button.disable_cheating_button()
+            else:
+                self._cheating_button.activate_cheating_button()
 
         if self._objectives.is_complete():
             if askyesno('Verify', '？？？?'):
                 self._master.destroy()
             else:
                 self.reset()
+
+
         return True
 
     def _refresh_status(self):
@@ -564,25 +589,40 @@ class CheatingButton(tk.Frame):
     def __init__(self, master):
         self._cheating_chances = 0
         self._cheating_button = tk.Button(master, text="Chances remaing ({})".format(self._cheating_chances),
-                                          command=None)
+                                          command=self.cheating,
+                                          state="disabled")
         self._cheating_button.pack()
 
-        self._cheating = True
+        self._cheating = False
+
+    def set_button_state(self,s):
+        if isinstance(s,bool):
+            self._cheating=s
+
+
+    def get_button_status(self):
+        return self._cheating
+
+    def update_chance(self):
+        self._cheating_chances+=1
+        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
+
+    def get_change(self):
+        return self._cheating_chances
 
     def disable_cheating_button(self):
         self._cheating_button.configure(state="disabled")
 
     def activate_cheating_button(self):
-
         self._cheating_button.configure(state="normal")
 
+
     def cheating(self):
+        showinfo("info","button activated")
+        self._cheating=True
         self._cheating_chances -= 1
         self.disable_cheating_button()
 
-        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
-        if self._cheating_chances == 0:
-            self.disable_cheating_button()
 
 
 
