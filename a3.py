@@ -89,6 +89,7 @@ class InfoPanel(tk.Frame):
         """Constructs information panel containing moves, score, image, and objectives
 
         Parameters:
+            master(tk.Tk()): Main frame
             ImageContainer(dict):a dict image being key, location being value
             DotsList(list): a list that stores dots and objectives
         """
@@ -123,7 +124,7 @@ class InfoPanel(tk.Frame):
         self.CenterImage.pack(side=tk.RIGHT)
 
     def set_moves(self, move):
-        """Set turns after each move"""
+        """Set moves of the game"""
         self.TurnsLabel.config(text="{}".format(move))
 
     def get_image(self, image):
@@ -131,11 +132,18 @@ class InfoPanel(tk.Frame):
         return self.ImageContainer.get(image, "Error")
 
     def config_image(self,imageId):
-        """Set the image for panel"""
+        """Set the image"""
         self.CenterImage.config(image=imageId)
 
     def set_status(self, image, move, objective):
-        """Set objectives and dots to be right side """
+        """Set objectives and dots to be right side
+
+        Parameters:
+            image(image):image to be displayed
+            move(int):remaining moves
+            objective(tuple<image, int>):objectives and dots of game
+
+        """
         self.StatusLabel = tk.Label(self.DotsFrame,
                                     image=image,
                                     text=move, compound="top")
@@ -145,14 +153,14 @@ class InfoPanel(tk.Frame):
                               move,
                               self.StatusLabel])
     def reset_status(self):
-        """The method only use to reset the packed dot frame"""
+        """Reset dots"""
         for data in self.DotsList:
             data[-1].pack_forget()
         self.DotsList.clear()
 
 
     def set_score(self, score):
-        """Set score for playing"""
+        """Set score of game"""
         self.CenterImage.config(text="{}".format(score))
 
 
@@ -165,10 +173,8 @@ class InfoPanel(tk.Frame):
                 self.DotsList[num][2] = objective[num][1]
 
 
-
-    # functionality
     def image_register(self, image=None, load_all=False):
-        """Register an image; raise key error if none image found"""
+        """Register an image; raise KeyError if none image found"""
         images = {
             "useless.gif": "images/companions/useless.gif",
             "penguin.gif": "images/companions/penguin.gif",
@@ -201,13 +207,14 @@ class IntervalBar(tk.Canvas):
         """Constructs canvas for progressing bar
 
         Parameters:
+            master(tk.Canvas): Main canvas
             ProgressCount(int): Number of progress after each move
             num_of_rectangles(int): An integer represents number of rectangle to draw
             length(int): Length of each small rectangle
             x(tuple):Starting point of rectangle
         """
 
-        self.ProgressCount = 0
+
         self.num_of_rectangles = num_of_rectangles
         X1, X2 = x
         Y1 = 10
@@ -242,8 +249,8 @@ class IntervalBar(tk.Canvas):
         self._canvas.create_rectangle(x, y, h, l, fill='white')
 
     def config_progress(self, charge):
-        """Config charging progress at given charge"""
-        if charge == 6:
+        """Set charge for companion game"""
+        if charge == 6: #companion fully charged
 
             for coordinate in range(0, 6):
                 self.white_rectangle(list(self.canvas_coordinate[coordinate]))
@@ -252,12 +259,9 @@ class IntervalBar(tk.Canvas):
             for coordinate in range(charge):
                 self.blue_rectangle(list(self.canvas_coordinate[coordinate]))
 
-    def get_turn(self):
-        """(int)Return the progress move"""
-        return self.ProgressCount
 
     def unpack_rectangle(self):
-        """The method use to redraw the rectangle once needed"""
+        """Redraw the rectangles with white color"""
         for coordinate in self.canvas_coordinate:
             x, y, h, l = coordinate
             self._canvas.create_rectangle(x, y, h, l, fill='white')
@@ -321,6 +325,7 @@ class CompanionDot(BasicDot):
 
 
 class SwirlDot(BasicDot):
+    """A swird dotx"""
     DOT_NAME = "swirl"
 
     def can_connect(self):
@@ -339,7 +344,6 @@ class DotsApp:
             master (tk.Tk|tk.Frame): The parent widget
         """
 
-        self.charge = 0
         self.InfoPanel = InfoPanel(master)
         self.IntervalBar = IntervalBar(master, 60, 6, (80, 80))
         self.menu(master)
@@ -392,13 +396,13 @@ class DotsApp:
 
 
     def reset_dots_status(self):
-        """re-load the objectiveview on inforpanel"""
+        """Reset the dots on info panel"""
         for status in self._objectives.get_status():
             self.InfoPanel.set_status(self.ObjectivesView.load_image(status[0], (20, 20)),
                                         status[1],
                                         status[0])
     def reset_companion_status(self):
-        """reset the companion status;it is usually use regenerate the companoion into grid"""
+        """Regenerate several swirl dots on grid"""
         RandomRow = [random.randint(1, 7) for num in range(4)]
         RandomColumn = [random.randint(1, 7) for num in range(4)]
         EskimoCompanionPosition = set(zip(RandomRow, RandomColumn))
@@ -578,7 +582,9 @@ class DotsApp:
                     steps = self._game.companion.activate(self._game)
                     self.reset_companion_status()
                     self._refresh_status()
+
                     return self.animate(steps)
+
                 else:
                     self.IntervalBar.config_progress(self._game.companion.get_charge())
         else:
@@ -602,7 +608,7 @@ class DotsApp:
 
 
     def menu(self, master):
-        """filemenu bar on top"""
+        """Constructs menu"""
         menubar = tk.Menu(master)
         master.config(menu=menubar)
         filemenu = tk.Menu(menubar)
@@ -615,7 +621,7 @@ class DotsApp:
         filemenu.add_command(label="Exit", underline=0, command=self.exit)
 
     def exit(self):
-        """The exit function on the menu"""
+        """Exit the game"""
         if askyesno('!', 'Do you wanna quit?'):
             self._master.destroy()
 
