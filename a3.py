@@ -255,7 +255,7 @@ class EskimoCompanion(AbstractCompanion):
 # You may edit as much of DotsApp as you wish
 class DotsApp:
     """Top level GUI class for simple Dots & Co game"""
-
+    GAME_MODEL="normal"
     def __init__(self, master):
         """Constructor
 
@@ -298,10 +298,7 @@ class DotsApp:
         self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
-        self.set_wildcard_dot()
-
-
-        # The following code may be useful when you are implementing task 2:
+        # self.set_wildcard_dot()
 
 
         # Grid View
@@ -316,6 +313,19 @@ class DotsApp:
         self.bind_events()
         self._refresh_status()
 
+    @classmethod
+    def get_game_model(cls):
+        return cls.GAME_MODEL
+
+    @classmethod
+    def set_game_model(cls,model):
+        cls.GAME_MODEL=model
+
+    # @staticmethod
+    # def is_switch_model(currentModel):
+    #     model=DotsApp.GAME_MODEL
+    #     return currentModel==model
+
     def set_wildcard_dot(self):
         row_list = []
         column_list = []
@@ -326,7 +336,6 @@ class DotsApp:
         random.shuffle(row_list)
         random.shuffle(column_list)
         position_list = set(zip(row_list, column_list))
-
         for position in position_list:
             if position not in self._dead_cells:
                 self._game.grid[position].set_dot(WildcardDot())
@@ -445,16 +454,8 @@ class DotsApp:
         Parameters:
             position (tuple<int, int>): The position to drag to
         """
-        if self._cheating_button.get_button_status():
 
-            a,b=position
-            a1,b1=self._size
-            if a<=a1 or b<=b1 and position not in self._dead_cells:
-                if  self._cheating_button.get_button_status():
-                    self.animate(self._game.activate_all({position}))
-                    self._cheating_button.set_button_state(False)
 
-        # self._grid_view.draw(self._game.grid)
         if self._game.is_resolving():
             return
         if not self._playing:
@@ -480,10 +481,16 @@ class DotsApp:
         if start:
             self._grid_view.draw_dragged_connection(start, position, kind)
 
-    def remove(self, *positions):
+    def remove(self, position):
         """Attempts to remove the tiles at the given positions
         """
-        raise DeprecationWarning()
+        if self._cheating_button.get_button_status():
+            a,b=position
+            a1,b1=self._size
+            if a<=a1 or b<=b1 and position not in self._dead_cells:
+                if  self._cheating_button.get_button_status():
+                    self.animate(self._game.activate_all({position}))
+                    self._cheating_button.set_button_state(False)
 
 
     def draw_grid(self):
@@ -493,12 +500,20 @@ class DotsApp:
     def reset(self):
         """Resets the game"""
         self._game.reset()
-        self.set_wildcard_dot()
+        if self.get_game_model() == "Eskimo":
+            self.set_swirl_dot()
+        elif self.get_game_model() == "Buffalo":
+            self.set_wildcard_dot()
+        elif self.get_game_model() == "normal":
+            pass
         self.draw_grid()
         self._objectives.reset()
         self._infopanel.set_turns(self._game.get_moves())
         self._intervalbar.reset_interval_bar()
         self._infopanel.set_remaining_dots(self._objectives.get_status())
+        self._cheating_button.set_button_state(False)
+        self._cheating_button.set_cheating_chance(0)
+        self._game.companion.reset()
 
     def evt_reset(self, event):
         """Reset game from keyboard shortcut"""
@@ -531,7 +546,14 @@ class DotsApp:
                 self._cheating_button.update_chance()
                 self._intervalbar.changing_progress(0)
                 steps = self._game.companion.activate(self._game)
-                self.set_wildcard_dot()
+                if self.get_game_model() == "Eskimo":
+                    self.set_swirl_dot()
+                elif self.get_game_model()=="Buffalo":
+                    self.set_wildcard_dot()
+                elif self.get_game_model()=="normal":
+                    pass
+
+                # self.set_wildcard_dot()
                 self._refresh_status()
                 return self.animate(steps)
             if self._cheating_button.get_change() == 0:
@@ -563,7 +585,7 @@ class DotsApp:
         master.config(menu=self._menu)
         self._file_menu = tk.Menu(self._menu)
         self._menu.add_cascade(label="File", menu=self._file_menu)
-        self._file_menu.add_command(label="New Game", command=self.reset)
+        self._file_menu.add_command(label="New Game", command=self.load_nomral_game)
         self._file_menu.add_command(label="Eskimo Game", command=self.load_eskimo_game)
         self._file_menu.add_command(label="Buffalo Game", command=self.load_buffalo_game)
         self._file_menu.add_separator()
@@ -577,10 +599,20 @@ class DotsApp:
             self._master.destroy()
         else:
             return True
+
+    def load_nomral_game(self):
+        self.set_game_model("normal")
+        self.reset()
     def load_eskimo_game(self):
-        pass
+        self.set_game_model("Eskimo")
+        self.reset()
+
     def load_buffalo_game(self):
-        pass
+        self.set_game_model("Buffalo")
+        self.reset()
+        
+
+
 
 
 class CheatingButton(tk.Frame):
