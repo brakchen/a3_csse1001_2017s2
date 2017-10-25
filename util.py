@@ -1,9 +1,71 @@
 """Utility functions/classes for CSSE1001 Assignment 3, Semester 2, 2017"""
 
+import os
+import tkinter as tk
+
+try:
+    from PIL import ImageTk, Image
+
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
+
 __author__ = "Benjamin Martin"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
+
+
+def load_image_path(image_id, size=None, prefix=None, suffix='.png'):
+    """(str) Returns the filepath to an image
+
+    Parameters:
+        image_id (str): The filename identifier of the image
+        size (tuple<int, int>): The size of the image to load
+        prefix (str): The prefix to prepend to the filepath (i.e. root directory)
+        suffix (str): The suffix to append to the filepath (i.e. file extension)
+    """
+    segments = []
+    if prefix:
+        segments.append(prefix)
+
+    if size is not None:
+        segments.append("{}x{}".format(*size))
+
+    segments.append(image_id + suffix)
+
+    return os.path.join(*segments)
+
+
+def load_image_pil(image_id, size, prefix, suffix='.png'):
+    """(ImageTk.PhotoImage) Returns a tkinter photo image
+
+    Parameters:
+        image_id (str): The filename identifier of the image
+        size (tuple<int, int>): The size of the image to load
+        prefix (str): The prefix to prepend to the filepath (i.e. root directory)
+        suffix (str): The suffix to append to the filepath (i.e. file extension)
+    """
+    file_path = load_image_path(image_id, size=size, prefix=prefix, suffix=suffix)
+    return ImageTk.PhotoImage(Image.open(file_path))
+
+
+def load_image_tk(image_id, size, prefix, suffix='.gif'):
+    """(tk.PhotoImage) Returns a tkinter photo image
+
+    Parameters:
+        image_id (str): The filename identifier of the image
+        size (tuple<int, int>): The size of the image to load
+        prefix (str): The prefix to prepend to the filepath (i.e. root directory)
+        suffix (str): The suffix to append to the filepath (i.e. file extension)
+    """
+    file_path = load_image_path(image_id, size=size, prefix=prefix, suffix=suffix)
+    return tk.PhotoImage(file=file_path)
+
+
+# This allows you to simply load png images with PIL if you have it,
+# otherwise will default to gifs through tkinter directly
+load_image = load_image_pil if HAS_PIL else load_image_tk  # pylint: disable=invalid-name
 
 
 def create_animation(widget, generator, delay=200, delays=None, step=None, callback=None):
@@ -39,6 +101,7 @@ def create_animation(widget, generator, delay=200, delays=None, step=None, callb
 
 class ImageManager:
     """Simple image manager to load images with simple caching"""
+
     def __init__(self, *args, loader=lambda image_id, size, *args: None):
         """Constructor
         

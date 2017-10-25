@@ -295,10 +295,10 @@ class DotsApp:
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
-        self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
+        self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
-        # self.set_wildcard_dot()
+
 
 
         # Grid View
@@ -619,9 +619,7 @@ class CheatingButton(tk.Frame):
 
     def __init__(self, master):
 
-
         self._master = master
-        #self._parent = parent
         self._cheating_chances = 0
         self._cheating_button = tk.Button(master, text="Chances remaing ({})".format(self._cheating_chances),
                                           command=self.cheating,
@@ -654,8 +652,9 @@ class CheatingButton(tk.Frame):
         self._cheating_button.configure(state="normal")
 
     def cheating(self):
+        self._cheating = True
         self._cheating_chances -= 1
-        self._cheating=True
+
         self.disable_cheating_button()
         self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
 
