@@ -204,7 +204,9 @@ class CompanionDot(BasicDot):
 
     def can_connect(self):
         return True
-
+class NonCompanion(AbstractCompanion):
+    def activate(self, game):
+        pass
 class BuffaloCompanion(AbstractCompanion):
     NAME = 'Buffalo'
 
@@ -262,7 +264,12 @@ class DotsApp:
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
+        self.companion={
+            "normal":NonCompanion(),
+            "Buffalo":BuffaloCompanion(),
+            "Eskimo":EskimoCompanion()
 
+        }
         self._master = master
         master.title("Dots & Co")
         master.bind("<Control-n>", self.evt_reset)
@@ -295,7 +302,8 @@ class DotsApp:
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
-        self._game = CompanionGame({BasicDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
+        self._game = CompanionGame({BasicDot: 1,
+                                    CompanionDot: 1}, companion=self.companion[self.GAME_MODEL], objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
 
@@ -514,6 +522,7 @@ class DotsApp:
         self._cheating_button.set_button_state(False)
         self._cheating_button.set_cheating_chance(0)
         self._game.companion.reset()
+        self._cheating_button.update_chance()
 
     def evt_reset(self, event):
         """Reset game from keyboard shortcut"""
@@ -602,14 +611,19 @@ class DotsApp:
 
     def load_nomral_game(self):
         self.set_game_model("normal")
+        self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
     def load_eskimo_game(self):
         self.set_game_model("Eskimo")
+        self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
+
 
     def load_buffalo_game(self):
         self.set_game_model("Buffalo")
+        self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
+
         
 
 
