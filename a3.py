@@ -280,7 +280,7 @@ class DotsApp:
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-        self._objectives = ObjectiveManager(list(objectives))
+        self._objectives = ObjectiveManager(objectives)
         
 
         self._objectivesView = ObjectivesView(master,
