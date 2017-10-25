@@ -51,7 +51,7 @@ from dot import AbstractKindlessDot
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 class AbstractFactory(ABC):

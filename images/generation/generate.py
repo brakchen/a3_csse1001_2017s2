@@ -26,7 +26,7 @@ __author__ = "Benjamin Martin"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
 __date__ = "27/09/2017"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 # https://en.wikipedia.org/wiki/Rotation_matrix
 ROTATION_0 = [[1, 0],
