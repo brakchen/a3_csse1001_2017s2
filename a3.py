@@ -462,7 +462,13 @@ class DotsApp:
         Parameters:
             position (tuple<int, int>): The position to drag to
         """
-
+        if self._cheating_button.get_button_status():
+            a,b=position
+            a1,b1=self._size
+            if a<=a1 or b<=b1 and position not in self._dead_cells:
+                if  self._cheating_button.get_button_status():
+                    self.animate(self._game.activate_all({position}))
+                    self._cheating_button.set_button_state(False)
 
         if self._game.is_resolving():
             return
@@ -522,7 +528,8 @@ class DotsApp:
         self._cheating_button.set_button_state(False)
         self._cheating_button.set_cheating_chance(0)
         self._game.companion.reset()
-        self._cheating_button.update_chance()
+        self._cheating_button.update_button_status()
+        self._cheating_button.disable_cheating_button()
 
     def evt_reset(self, event):
         """Reset game from keyboard shortcut"""
@@ -653,6 +660,9 @@ class CheatingButton(tk.Frame):
 
     def update_chance(self):
         self._cheating_chances+=1
+        self.update_button_status()
+
+    def update_button_status(self):
         self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances),
                                         state="normal")
 
@@ -666,6 +676,7 @@ class CheatingButton(tk.Frame):
         self._cheating_button.configure(state="normal")
 
     def cheating(self):
+        showinfo("info"," cheating button activated")
         self._cheating = True
         self._cheating_chances -= 1
 
