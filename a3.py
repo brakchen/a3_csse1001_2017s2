@@ -554,6 +554,7 @@ class DotsApp:
         self.IntervalBar.config_progress(0)
         self.IntervalBar.unpack_rectangle()
         self.reset_dots_status()
+        self._game.companion.reset()
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
@@ -626,11 +627,6 @@ class DotsApp:
             self._master.destroy()
 
 
-    def get_companion_dot(self):
-        """Return companion dot required"""
-        for position, dots in self._game.grid.items():
-            if dots.get_dot() is not None and isinstance(dots.get_dot(), SwirlDot):
-                yield (position, dots.get_dot())
 
 
 
