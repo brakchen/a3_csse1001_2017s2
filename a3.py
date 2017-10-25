@@ -266,8 +266,7 @@ class DotsApp:
         self._master = master
         master.title("Dots & Co")
         master.bind("<Control-n>", self.evt_reset)
-        self._game_mode = "Eskimo"
-        self._charge = 0
+        self._game_mode = "Buffalo"
         self._infopanel = InfoPanel(master)
         self._intervalbar = IntervalBar(master)
         self.menu(master)
@@ -494,11 +493,7 @@ class DotsApp:
     def reset(self):
         """Resets the game"""
         self._game.reset()
-        if self._game_mode == "Buffalo":
-            self.set_wildcard_dot()
-        else:
-            self.set_swirl_dot()
-
+        self.set_wildcard_dot()
         self.draw_grid()
         self._objectives.reset()
         self._infopanel.set_turns(self._game.get_moves())
@@ -506,7 +501,9 @@ class DotsApp:
         self._infopanel.set_remaining_dots(self._objectives.get_status())
 
     def evt_reset(self, event):
+        """Reset game from keyboard shortcut"""
         self.reset()
+
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
         state = self._game.get_game_state()
@@ -530,11 +527,14 @@ class DotsApp:
             self._game.companion.charge()
             self._intervalbar.changing_progress(self._game.companion.get_charge())
             if self._game.companion.is_fully_charged():
-                self._cheating_button.update_chance()
                 self._game.companion.reset()
+                self._cheating_button.update_chance()
                 self._intervalbar.changing_progress(0)
+                steps = self._game.companion.activate(self._game)
                 self.set_wildcard_dot()
-            if self._cheating_button.get_change()<=0:
+                self._refresh_status()
+                return self.animate(steps)
+            if self._cheating_button.get_change() == 0:
                 self._cheating_button.disable_cheating_button()
             else:
                 self._cheating_button.activate_cheating_button()
@@ -544,10 +544,6 @@ class DotsApp:
                 self.reset()
             else:
                 self._master.destroy()
-
-
-
-
 
         return True
 
@@ -590,6 +586,10 @@ class DotsApp:
 class CheatingButton(tk.Frame):
 
     def __init__(self, master):
+
+
+        self._master = master
+        #self._parent = parent
         self._cheating_chances = 0
         self._cheating_button = tk.Button(master, text="Chances remaing ({})".format(self._cheating_chances),
                                           command=self.cheating,
@@ -602,13 +602,15 @@ class CheatingButton(tk.Frame):
         if isinstance(s,bool):
             self._cheating=s
 
-
+    def set_cheating_chance(self, chance):
+        self._cheating_chances = chance
     def get_button_status(self):
         return self._cheating
 
     def update_chance(self):
         self._cheating_chances+=1
-        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
+        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances),
+                                        state="normal")
 
     def get_change(self):
         return self._cheating_chances
@@ -619,15 +621,11 @@ class CheatingButton(tk.Frame):
     def activate_cheating_button(self):
         self._cheating_button.configure(state="normal")
 
-
     def cheating(self):
-        showinfo("info","button activated")
-        self._cheating=True
         self._cheating_chances -= 1
+        self._cheating=True
         self.disable_cheating_button()
-
-
-
+        self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances))
 
 def main():
     """Sets-up the GUI for Dots & Co"""
