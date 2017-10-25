@@ -199,7 +199,7 @@ class InfoPanel(tk.Frame):
                     self.ImageContainer[image]=ImageTk.PhotoImage(file=images[image])
                 return self
 
-
+#task 2 有关
 class IntervalBar(tk.Canvas):
     """A class that constructs progress bar"""
 
@@ -289,7 +289,7 @@ class EskimoCompanion(AbstractCompanion):
                 - game.activate_all(positions): If positions need to be activated
                 - None: If no animation needs to occur
         """
-
+        #task 2
         def get_companion_dot():
             """Return generator that contain postion and dots
                 Yield:
@@ -309,7 +309,7 @@ class EskimoCompanion(AbstractCompanion):
             positionList.append(pos)
 
         return game.activate_all(set(positionList))
-
+#task 2
 class CompanionDot(BasicDot):
     """A companion dot"""
 
@@ -323,7 +323,7 @@ class CompanionDot(BasicDot):
         """(Boolean) Return the dot can be connected or not"""
         return True
 
-
+#task2
 class SwirlDot(BasicDot):
     """A swird dotx"""
     DOT_NAME = "swirl"
@@ -368,18 +368,24 @@ class DotsApp:
                       (3, 2), (3, 3), (3, 4),
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
-
+        #task2
         self._game = CompanionGame({BasicDot: 1,
                                     CompanionDot: 1}, companion=EskimoCompanion(), objectives=self._objectives,
                                    kinds=(1, 2, 3, 4), size=(8, 8),
                                    dead_cells=self.dead_cells)
+        #task2
         RandomRow = [random.randint(1, 7) for num in range(4)]
+        #task2
         RandomColumn = [random.randint(1, 7) for num in range(4)]
+        #task2
         EskimoCompanionPosition = set(zip(RandomRow, RandomColumn))
-
+        #task2
         for position in EskimoCompanionPosition:
+            # task2
             if position not in self.dead_cells:
+                # task2
                 self._game.grid[position].set_dot(SwirlDot(random.randint(1, 5)))
+                # task2
         self.reset_dots_status()
 
         # Grid View
@@ -401,6 +407,8 @@ class DotsApp:
             self.InfoPanel.set_status(self.ObjectivesView.load_image(status[0], (20, 20)),
                                         status[1],
                                         status[0])
+
+    # task2
     def reset_companion_status(self):
         """Regenerate several swirl dots on grid"""
         RandomRow = [random.randint(1, 7) for num in range(4)]
@@ -543,6 +551,8 @@ class DotsApp:
     def draw_grid(self):
         """Draws the grid"""
         self._grid_view.draw(self._game.grid)
+
+    #task2 有关
     def reset(self):
         """Resets the game"""
         self._game.reset()
@@ -572,6 +582,8 @@ class DotsApp:
         """Handles the end of a drop animation"""
         self.check_game_over()
 
+
+        #task2
         if self._playing:
                 self._game.companion.charge()
                 self.IntervalBar.config_progress(self._game.companion.get_charge())
