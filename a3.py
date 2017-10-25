@@ -263,7 +263,7 @@ class DotsApp:
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-        self._objectives = ObjectiveManager(list(objectives))
+        self._objectives = ObjectiveManager(objectives)
         
         self._objectivesView = ObjectivesView(master,
                                               image_manager=self._imageManager)
@@ -280,8 +280,9 @@ class DotsApp:
         self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
-        # self.set_wildcardDots()
+        self.set_wildcardDots()
         self.set_anchorDots()
+
 
         # The following code may be useful when you are implementing task 2:
         # Grid View
@@ -323,22 +324,31 @@ class DotsApp:
         for position in position_list:
             if position not in self._dead_cells:
                 self._game.grid[position].set_dot(AnchorDot('anchor'))
-
-    def isActivateAnchorDots(self):
-        tempSet=[]
+    def isActivateAnchorDot(self):
         for data in self._game.grid.items():
             position,cell = data
             pos = position[0]
-            # if isinstance(cell.get_dot(),AnchorDot):
-            #     print(postion)
-            if pos == 7 and isinstance(cell.get_dot(),AnchorDot):
-                for num in range(8):
-                    new_position = (pos, num)
-                    tempSet.append(new_position)
 
-            print(tempSet)
-                    # tempSet.add((postion[0],num))
-        return self._game.activate_all(set(tempSet))
+            if pos == 7 and isinstance(cell.get_dot(),AnchorDot):
+                return True
+        return False
+
+    def activateAnchorDots(self):
+        if self.isActivateAnchorDot():
+            tempSet=[]
+            for data in self._game.grid.items():
+                position,cell = data
+                pos = position[0]
+
+                if pos == 7 and isinstance(cell.get_dot(),AnchorDot):
+                    for num in range(8):
+                        new_position = (pos, num)
+                        tempSet.append(new_position)
+
+            self.animate(self._game.activate_all(set(tempSet)))
+
+
+
 
 
     def draw_grid_borders(self):
@@ -501,10 +511,11 @@ class DotsApp:
 
     def _drop_complete(self):
         """Handles the end of a drop animation"""
-        self.isActivateAnchorDots()
+
         self.check_game_over()
 
         if self._playing:
+            self.activateAnchorDots()
             self._game.companion.charge()
             self._intervalBar.charging_progress(self._game.companion.get_charge())
             if self._game.companion.is_fully_charged():
