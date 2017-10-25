@@ -13,6 +13,8 @@ import os
 import random
 from tkinter.messagebox import showinfo, askyesno
 
+import pygame
+
 from companion import AbstractCompanion
 
 try:
@@ -245,6 +247,12 @@ class DotsApp:
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
+        try:
+            pygame.mixer.init()
+            pygame.mixer.music.load("Yellow.mp3")
+            pygame.mixer.music.play()
+        except pygame.error:
+            pass
 
         self._master = master
         master.title("Dots & Co")
@@ -551,11 +559,15 @@ class DotsApp:
         self._fileMenu = tk.Menu(self._menuBar)
         self._menuBar.add_cascade(label="File", menu=self._fileMenu)
         self._fileMenu.add_command(label="New Game", command=self.reset)
-        self._fileMenu.add_command(label="Normal Game", command=None)
-        self._fileMenu.add_command(label="Buffalo Game", command=self.load_buffaloGame)
+        self._fileMenu.add_command(label="Music:pause ", command=self.pause)
+        self._fileMenu.add_command(label="Music:play ", command=self.play)
         self._fileMenu.add_separator()
         self._fileMenu.add_command(label="Exit", command=self.exit)
 
+    def pause(self):
+        pygame.mixer.music.pause()
+    def play(self):
+        pygame.mixer.music.unpause()
     def exit(self):
 
         self._replyMessage = messagebox.askquestion(type=messagebox.YESNOCANCEL,
