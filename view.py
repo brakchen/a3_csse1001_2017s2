@@ -26,7 +26,7 @@ from util import ImageManager
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 class GridView(EventEmitter, tk.Canvas):
     """View component for grid in a game of Dots & Co
