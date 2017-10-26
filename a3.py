@@ -28,7 +28,7 @@ from dot import BasicDot, WildcardDot
 from util import create_animation, ImageManager
 
 # Fill these in with your details
-__author__ = ""
+__author__ = "Jiayu Li"
 __email__ = ""
 __date__ = ""
 
@@ -82,7 +82,15 @@ ANIMATION_DELAYS = {
 # Define your classes here
 
 class InfoPanel(tk.Frame):
+    """Basic class for implementing information on top of the App"""
     def __init__(self, master):
+        """Constructs information of info panel on top
+
+        Parameter:
+                master(tk.Tk()):The parent widget
+                _dots_list(list):list containing all dots and objectives
+
+        """
 
         self._dots_list = []
         self._info_frame = tk.Frame(master)
@@ -111,12 +119,15 @@ class InfoPanel(tk.Frame):
         self._useless_image.pack(side=tk.RIGHT)
 
     def set_turns(self, turn):
+        """Sets turns for info panel"""
         self._moves_label.config(text="{}".format(turn))
 
     def set_score(self, score):
+        """Sets score for info panel"""
         self._useless_image.config(text="{}".format(score))
 
     def set_status(self, image_id, count, obj):
+        """Sets dots and objectives status"""
 
         self._status_label = tk.Label(self._dots_frame,
                                       image=image_id,
@@ -126,14 +137,22 @@ class InfoPanel(tk.Frame):
         self._dots_list.append(self._status_label)
 
     def set_remaining_dots(self, obj):
-        for laebl,length in zip(self._dots_list,range(len(self._dots_list))):
-            laebl.config(text=obj[length][1])
+        """Refreshes remaining dots(objectives)"""
+        for label,length in zip(self._dots_list,range(len(self._dots_list))):
+            label.config(text=obj[length][1])
 
 
 
 class IntervalBar(tk.Canvas):
+    """Basic class which implements interval bar next to info panel"""
     def __init__(self, master):
+        """Constructs interval bar showing the progress of game
 
+        Parameter:
+                master(tk.Tk()):The parent widget
+                _canvas(tk.Canvas()):Canvas containing rectangles
+
+        """
         self._canvas = tk.Canvas(master, bg="white",
                                  width=500, height=30)
         self._canvas.pack(side=tk.TOP)
@@ -146,7 +165,7 @@ class IntervalBar(tk.Canvas):
         self.draw_rectangle()
 
     def draw_rectangle(self):
-        
+        """Draw six rectangles"""
         self._canvas.create_rectangle(80, 10, 140, 30)
         self._canvas.create_rectangle(140, 10, 200, 30)
         self._canvas.create_rectangle(200, 10, 260, 30)
@@ -155,14 +174,17 @@ class IntervalBar(tk.Canvas):
         self._canvas.create_rectangle(380, 10, 440, 30)
 
     def fill_rectangle_blue(self, coordinate):
+        """Fill rectangles with blue at given position"""
         x, y, z, w = coordinate
         self._canvas.create_rectangle(x, y, z, w, fill='#508ebf')
 
     def fill_rectangle_blank(self, coordinate):
+        """Fill rectangles with white at given position"""
         x, y, z, w = coordinate
         self._canvas.create_rectangle(x, y, z, w, fill='white')
 
     def changing_progress(self, charge):
+        """Changing the process of game as charge changes"""
         if charge == 6:
             for coordinate in self._canvas_coordinate:
                 x, y, z, w = coordinate
@@ -177,6 +199,7 @@ class IntervalBar(tk.Canvas):
             self.fill_rectangle_blank(coordinate)
 
 class SwirlDot(BasicDot):
+    """A swirl dot which cannot be connected"""
     DOT_NAME = "swirl"
 
     def can_connect(self):
@@ -204,10 +227,17 @@ class CompanionDot(BasicDot):
 
     def can_connect(self):
         return True
+
+
 class NonCompanion(AbstractCompanion):
+    """Non-companion class"""
     def activate(self, game):
+        """Override this method"""
         pass
+
+
 class BuffaloCompanion(AbstractCompanion):
+    """A class that builds function for Buffalo Companion"""
     NAME = 'Buffalo'
 
     def __init__(self):
@@ -217,7 +247,7 @@ class BuffaloCompanion(AbstractCompanion):
         pass
 
 class EskimoCompanion(AbstractCompanion):
-    """A class that builds function for EskimoCompanion"""
+    """A class that builds function for Eskimo Companion"""
     NAME = 'Eskimo'
 
     def __init__(self):
@@ -335,6 +365,7 @@ class DotsApp:
     #     return currentModel==model
 
     def set_wildcard_dot(self):
+        """Randomly sets a few wildcard dots on the grid"""
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -349,6 +380,7 @@ class DotsApp:
                 self._game.grid[position].set_dot(WildcardDot())
 
     def set_swirl_dot(self):
+        """Randomly sets a few swirl dots on the grid"""
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -512,7 +544,7 @@ class DotsApp:
         self._grid_view.draw(self._game.grid)
 
     def reset(self):
-        """Resets the game"""
+        """Resets the game foe the given mode"""
         self._game.reset()
         if self.get_game_model() == "Eskimo":
             self.set_swirl_dot()
@@ -596,7 +628,7 @@ class DotsApp:
             self.reset()
 
     def menu(self, master):
-        
+        """A menu of app"""
         self._menu = tk.Menu(master)
         master.config(menu=self._menu)
         self._file_menu = tk.Menu(self._menu)
@@ -608,6 +640,7 @@ class DotsApp:
         self._file_menu.add_command(label="Exit", command=self.exit_game)
 
     def exit_game(self):
+        """Exit game"""
         reply = messagebox.askquestion(type=messagebox.YESNOCANCEL,
                                        title="Quit",
                                        message="Do you really want to quit?")
@@ -617,29 +650,33 @@ class DotsApp:
             return True
 
     def load_nomral_game(self):
+        """Shift gamemode to normal game"""
         self.set_game_model("normal")
         self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
     def load_eskimo_game(self):
+        """Shift gamemode to EskimoCompanion game"""
         self.set_game_model("Eskimo")
         self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
 
 
     def load_buffalo_game(self):
+        """Shift gamemode to BuffaloCompanion game"""
         self.set_game_model("Buffalo")
         self._game.companion=self.companion[self.GAME_MODEL]
         self.reset()
 
-        
-
-
-
-
 class CheatingButton(tk.Frame):
+    """A class that builds the function of a button"""
 
     def __init__(self, master):
+        """Constructs the cheating button
 
+        Parameter:
+                master(tk.Tk()):Parent widget
+                _cheating_chances(int):remaining chances for removing a dot
+        """
         self._master = master
         self._cheating_chances = 0
         self._cheating_button = tk.Button(master, text="Chances remaing ({})".format(self._cheating_chances),
@@ -650,32 +687,41 @@ class CheatingButton(tk.Frame):
         self._cheating = False
 
     def set_button_state(self,s):
+        """Sets the state for button"""
         if isinstance(s,bool):
             self._cheating=s
 
     def set_cheating_chance(self, chance):
+        """Sets the remaining chances for button"""
         self._cheating_chances = chance
     def get_button_status(self):
+        """(bool)Returns button state"""
         return self._cheating
 
     def update_chance(self):
+        """Increment cheating chances"""
         self._cheating_chances+=1
         self.update_button_status()
 
     def update_button_status(self):
+        """Activate the button"""
         self._cheating_button.configure(text="Chances remaining ({})".format(self._cheating_chances),
                                         state="normal")
 
     def get_change(self):
+        """(int)Returns the cheating chances"""
         return self._cheating_chances
 
     def disable_cheating_button(self):
+        """Disable the button"""
         self._cheating_button.configure(state="disabled")
 
     def activate_cheating_button(self):
+        """Activate the button"""
         self._cheating_button.configure(state="normal")
 
     def cheating(self):
+        """Handles the cheating function of cheating button"""
         showinfo("info"," cheating button activated")
         self._cheating = True
         self._cheating_chances -= 1
