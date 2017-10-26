@@ -103,19 +103,17 @@ class InfoPanel(tk.Frame):
         self._moves_label = tk.Label(self._moves_frame,
                                      text="", font=(None, 30))
 
-        # Set center image and score next to image
         self._image = tk.PhotoImage(file="images/companions/useless.gif")
         self._useless_image = tk.Label(self._companion_frame, text="",
                                        font=(None, 40),
                                        image=self._image,
                                        compound="right")
 
-        # Packing all the frames
         self._info_frame.pack()
         self._moves_frame.pack(side=tk.LEFT, ipadx=50)
         self._companion_frame.pack(side=tk.LEFT, expand=True)
         self._dots_frame.pack(side=tk.LEFT, expand=True)
-        self._moves_label.pack(anchor=tk.W, expand=False)
+        self._moves_label.pack(anchor=tk.W, expand=True)
         self._useless_image.pack(side=tk.RIGHT)
 
     def set_turns(self, turn):
@@ -138,10 +136,9 @@ class InfoPanel(tk.Frame):
 
     def set_remaining_dots(self, obj):
         """Refreshes remaining dots(objectives)"""
-        #---------------------Needs changing
         for label,length in zip(self._dots_list,range(len(self._dots_list))):
             label.config(text=obj[length][1])
-        #_____________________
+
 
 
 class IntervalBar(tk.Canvas):
@@ -186,7 +183,6 @@ class IntervalBar(tk.Canvas):
 
     def changing_progress(self, charge):
         """Changing the process of game as charge changes"""
-        #-----------------needs changing
         if charge == 6:
             for coordinate in self._canvas_coordinate:
                 x, y, z, w = coordinate
@@ -199,7 +195,6 @@ class IntervalBar(tk.Canvas):
         for coordinate in self._canvas_coordinate:
             x, y, z, w = coordinate
             self.fill_rectangle_blank(coordinate)
-        #------------------
 class SwirlDot(BasicDot):
     """A swirl dot which cannot be connected"""
     DOT_NAME = "swirl"
@@ -296,7 +291,7 @@ class DotsApp:
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
-        self.companion={
+        self._companion={
             "normal":NonCompanion(),
             "Buffalo":BuffaloCompanion(),
             "Eskimo":EskimoCompanion()
@@ -304,6 +299,7 @@ class DotsApp:
         }
         self._master = master
         master.title("Dots & Co")
+        #Keyboard shortcut
         master.bind("<Control-n>", self.evt_reset)
         self._game_mode = "Buffalo"
         self._infopanel = InfoPanel(master)
@@ -335,7 +331,7 @@ class DotsApp:
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
         self._game = CompanionGame({BasicDot: 1,
-                                    CompanionDot: 1}, companion=self.companion[self.GAME_MODEL], objectives=self._objectives,
+                                    CompanionDot: 1}, companion=self._companion[self.GAME_MODEL], objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
 
@@ -355,16 +351,14 @@ class DotsApp:
 
     @classmethod
     def get_game_model(cls):
+        """(cls)Returns the current game mode"""
         return cls.GAME_MODEL
 
     @classmethod
     def set_game_model(cls,model):
+        """Sets game mode"""
         cls.GAME_MODEL=model
 
-    # @staticmethod
-    # def is_switch_model(currentModel):
-    #     model=DotsApp.GAME_MODEL
-    #     return currentModel==model
 
     def set_wildcard_dot(self):
         """Randomly sets a few wildcard dots on the grid"""
@@ -382,7 +376,7 @@ class DotsApp:
                 self._game.grid[position].set_dot(WildcardDot())
 
     def set_swirl_dot(self):
-        """Randomly sets a few swirl dots on the grid"""
+        """Randomly sets a few random kinds of swirl dots on the grid"""
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -491,7 +485,7 @@ class DotsApp:
 
     def _drag(self, position):
         """Attempts to connect to the given position, otherwise draws a dragged
-        line from the start
+        line from the start,and then activate the function of cheating button
 
         Parameters:
             position (tuple<int, int>): The position to drag to
@@ -546,7 +540,7 @@ class DotsApp:
         self._grid_view.draw(self._game.grid)
 
     def reset(self):
-        """Resets the game foe the given mode"""
+        """Resets the game for the given mode"""
         self._game.reset()
         if self.get_game_model() == "Eskimo":
             self.set_swirl_dot()
@@ -654,19 +648,19 @@ class DotsApp:
     def load_nomral_game(self):
         """Shift gamemode to normal game"""
         self.set_game_model("normal")
-        self._game.companion=self.companion[self.GAME_MODEL]
+        self._game.companion=self._companion[self.GAME_MODEL]
         self.reset()
     def load_eskimo_game(self):
         """Shift gamemode to EskimoCompanion game"""
         self.set_game_model("Eskimo")
-        self._game.companion=self.companion[self.GAME_MODEL]
+        self._game.companion=self._companion[self.GAME_MODEL]
         self.reset()
 
 
     def load_buffalo_game(self):
         """Shift gamemode to BuffaloCompanion game"""
         self.set_game_model("Buffalo")
-        self._game.companion=self.companion[self.GAME_MODEL]
+        self._game.companion=self._companion[self.GAME_MODEL]
         self.reset()
 
 class CheatingButton(tk.Frame):
