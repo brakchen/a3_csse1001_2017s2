@@ -138,9 +138,10 @@ class InfoPanel(tk.Frame):
 
     def set_remaining_dots(self, obj):
         """Refreshes remaining dots(objectives)"""
+        #---------------------Needs changing
         for label,length in zip(self._dots_list,range(len(self._dots_list))):
             label.config(text=obj[length][1])
-
+        #_____________________
 
 
 class IntervalBar(tk.Canvas):
@@ -185,6 +186,7 @@ class IntervalBar(tk.Canvas):
 
     def changing_progress(self, charge):
         """Changing the process of game as charge changes"""
+        #-----------------needs changing
         if charge == 6:
             for coordinate in self._canvas_coordinate:
                 x, y, z, w = coordinate
@@ -197,7 +199,7 @@ class IntervalBar(tk.Canvas):
         for coordinate in self._canvas_coordinate:
             x, y, z, w = coordinate
             self.fill_rectangle_blank(coordinate)
-
+        #------------------
 class SwirlDot(BasicDot):
     """A swirl dot which cannot be connected"""
     DOT_NAME = "swirl"
@@ -610,7 +612,7 @@ class DotsApp:
                 self._cheating_button.activate_cheating_button()
         else:
             self._cheating_button.disable_cheating_button()
-            if askyesno('Verify', 'Do you want to play again?'):
+            if askyesno('Awesome!', 'Play again?'):
                 self.reset()
             else:
                 self._master.destroy()
