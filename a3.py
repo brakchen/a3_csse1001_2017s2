@@ -12,8 +12,12 @@ from tkinter import messagebox
 import os
 import random
 from tkinter.messagebox import showinfo, askyesno
-
-import pygame
+try:
+    import pygame
+    HAS_PG=True
+except ModuleNotFoundError:
+    HAS_PG = False
+    print("module not find.Please run 'pip3 install pygame' on bash")
 
 from companion import AbstractCompanion
 
@@ -133,6 +137,7 @@ class InfoPanel(tk.Frame):
         self.uselessImageLabel.config(text="{}".format(score))
 
     def set_status(self, image_id, count, obj):
+        """set up the goal frame in ordet to well display the remain dots"""
 
         self.statusLabel = tk.Label(self.dotsFrame,
                                     image=image_id,
@@ -142,13 +147,16 @@ class InfoPanel(tk.Frame):
         self.dotsList.append(self.statusLabel)
 
     def set_remaining_dots(self, obj):
+        """"""
         for label,length in zip(self.dotsList, range(len(self.dotsList))):
             label.config(text=obj[length][1])
 
 
 
 class IntervalBar(tk.Canvas):
+
     def __init__(self, master):
+        """init interval bar class and setup some status"""
 
         self.canvas = tk.Canvas(master, bg="white",
                                 width=500, height=30)
@@ -163,7 +171,7 @@ class IntervalBar(tk.Canvas):
         self.draw_rectangles()
 
     def draw_rectangles(self):
-        
+        """draw a interval bar retangle"""
         self.canvas.create_rectangle(80, 10, 140, 30)
         self.canvas.create_rectangle(140, 10, 200, 30)
         self.canvas.create_rectangle(200, 10, 260, 30)
@@ -172,14 +180,18 @@ class IntervalBar(tk.Canvas):
         self.canvas.create_rectangle(380, 10, 440, 30)
 
     def fill_rectangle_blue(self, coordinate):
+        """fill the interval bar as blue"""
         x, y, z, w = coordinate
         self.canvas.create_rectangle(x, y, z, w, fill='#508ebf')
 
     def fill_rectangle_blank(self, coordinate):
+        """fill the interval bar as white"""
+
         x, y, z, w = coordinate
         self.canvas.create_rectangle(x, y, z, w, fill='white')
 
     def charging_progress(self, charge):
+        """let the interval bat relate to charge"""
         if charge == 6:
             for coordinate in self.rectangleCoordinates:
                 x, y, z, w = coordinate
@@ -210,29 +222,20 @@ class CompanionDot(BasicDot):
 
     DOT_NAME = "Companion"
 
-    def activate(self, position, game, activated, has_loop=False):
-        self._expired = True
-
-    def adjacent_activated(self, position, game, activated, activated_neighbours, has_loop=False):
-        pass
-
-    def after_resolved(self, position, game):
-        pass
-
     def get_view_id(self):
         """(str) Returns a string to identify the image for this dot"""
         return "{}/{}".format(self.get_name(), + self.get_kind())
 
-    def can_connect(self):
-        return True
 
 class BuffaloCompanion(AbstractCompanion):
     NAME = 'Buffalo'
 
     def __init__(self):
+        """init calss"""
         super().__init__()
 
     def activate(self, game):
+        """setup activate event .The function main purpose if avoid the error occurs"""
         pass
 
 
@@ -247,12 +250,13 @@ class DotsApp:
         Parameters:
             master (tk.Tk|tk.Frame): The parent widget
         """
-        try:
-            pygame.mixer.init()
-            pygame.mixer.music.load("Yellow.mp3")
-            pygame.mixer.music.play()
-        except pygame.error:
-            pass
+        if HAS_PG:
+            try:
+                pygame.mixer.init()
+                pygame.mixer.music.load("Yellow.mp3")
+                pygame.mixer.music.play()
+            except pygame.error:
+                pass
 
         self._master = master
         master.title("Dots & Co")
@@ -271,7 +275,7 @@ class DotsApp:
         # randomly pair counts with each kind of dot
         objectives = zip([BasicDot(1), BasicDot(2), BasicDot(4), BasicDot(3)], counts)
 
-        self._objectives = ObjectiveManager(objectives)
+        self._objectives = ObjectiveManager(list(objectives))
         
         self._objectivesView = ObjectivesView(master,
                                               image_manager=self._imageManager)
@@ -285,7 +289,8 @@ class DotsApp:
                       (4, 2), (4, 3), (4, 4),
                       (0, 7), (1, 7), (6, 7), (7, 7)}
 
-        self._game = CompanionGame({BasicDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
+        self._game = CompanionGame({BasicDot: 1,
+                                    CompanionDot: 1}, companion=BuffaloCompanion(), objectives=self._objectives,
                                         kinds=(1, 2, 3, 4), size=self._size,
                                         dead_cells=self._dead_cells)
         self.set_wildcardDots()
@@ -305,6 +310,7 @@ class DotsApp:
         self._refresh_status()
 
     def set_wildcardDots(self):
+        """setup wildcard dots"""
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -320,6 +326,7 @@ class DotsApp:
                 self._game.grid[position].set_dot(WildcardDot())
 
     def set_anchorDots(self):
+        """set up anchor dots"""
         row_list = []
         column_list = []
         for a in range(0, 7):
@@ -333,6 +340,11 @@ class DotsApp:
             if position not in self._dead_cells:
                 self._game.grid[position].set_dot(AnchorDot('anchor'))
     def isActivateAnchorDot(self):
+        """check if anchor dot activate
+
+            return
+                bool:if the anchor dot activated
+        """
         for data in self._game.grid.items():
             position,cell = data
             pos = position[0]
@@ -342,6 +354,7 @@ class DotsApp:
         return False
 
     def activateAnchorDots(self):
+        """Fisrt check is anchor activaed if activated then run function to clear the last line dots"""
         if self.isActivateAnchorDot():
             tempSet=[]
             for data in self._game.grid.items():
@@ -499,16 +512,20 @@ class DotsApp:
     def reset(self):
         """Resets the game"""
         self._game.reset()
-        self.set_anchorDots()
-        self.draw_grid()
         self._objectives.reset()
+        self.set_anchorDots()
+        self.set_wildcardDots()
+        self.draw_grid()
         self._infoPanel.set_moves(self._game.get_moves())
         self._intervalBar.fill_all_blank()
         self._infoPanel.set_remaining_dots(self._objectives.get_status())
+        self._playing=True
 
     def check_game_over(self):
         """Checks whether the game is over and shows an appropriate message box if so"""
+
         state = self._game.get_game_state()
+        # print(state)
         if state == self._game.GameState.WON:
             showinfo("Game Over!", "You won!!!")
             self._playing = False
@@ -535,12 +552,11 @@ class DotsApp:
                 return self.animate(steps)
 
         else:
-            if askyesno('Verify', 'Do you want to play again?'):
+            if askyesno('Exit', 'wanna play again?'):
                 self.reset()
             else:
                 self._master.destroy()
 
-        return True
 
     def _refresh_status(self):
         """Handles change in score"""
@@ -548,12 +564,12 @@ class DotsApp:
         self._infoPanel.set_score(self._game.get_score())
         self._infoPanel.set_moves(self._game.get_moves())
         self._infoPanel.set_remaining_dots(self._objectives.get_status())
-        if self._objectives.is_complete():
-            self._objectives.reset()
-            self.reset()
+        # if self._objectives.is_complete():
+        #     self._objectives.reset()
+        #     self.reset()
 
     def _menuBar(self, master):
-        
+        """menu setup"""
         self._menuBar = tk.Menu(master)
         master.config(menu=self._menuBar)
         self._fileMenu = tk.Menu(self._menuBar)
@@ -565,37 +581,23 @@ class DotsApp:
         self._fileMenu.add_command(label="Exit", command=self.exit)
 
     def pause(self):
+        """For handle music pause"""
         pygame.mixer.music.pause()
     def play(self):
+        """for handle muisc replay"""
         pygame.mixer.music.unpause()
     def exit(self):
-
+        """for handle exit event"""
         self._replyMessage = messagebox.askquestion(type=messagebox.YESNOCANCEL,
                                                     title="Exit game",
                                                     message="Do you want to exit?\nMake sure you save your changes")
         if self._replyMessage:
             self._master.destroy()
-        else:
-            return True
 
 
-    def load_buffaloGame(self):
-        pass
 
 
-class AutoPlayingButton(tk.Frame):
 
-    def __init__(self, master):
-
-        self._master = master
-
-        self.autoPlayingButton = tk.Button(master, text="AutoPlay",
-                                            command=self.autoPlaying,
-                                            )
-        self.autoPlayingButton.pack()
-
-    def autoPlaying(self):
-        pass
 
 def main():
     """Sets-up the GUI for Dots & Co"""
