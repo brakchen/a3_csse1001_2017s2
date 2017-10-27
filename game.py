@@ -16,7 +16,7 @@ from modules.weighted_selector import WeightedSelector
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 class DotGrid(Matrix):
@@ -880,7 +880,7 @@ class DotGame(CoreDotGame):
         dot_factory = DotFactory(self.kind_selector, dot_selector)
 
         super().__init__(dot_factory, size=size, dead_cells=dead_cells, objectives=objectives, min_group=min_group,
-                         moves=20, animation=animation)
+                         moves=moves, animation=animation)
 
 class CompanionGame(DotGame):
     """Simple game of Dots & Co, with a Companion

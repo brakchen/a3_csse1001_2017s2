@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 __author__ = "Benjamin Martin and Brae Webb"
 __copyright__ = "Copyright 2017, The University of Queensland"
 __license__ = "MIT"
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 class AbstractDot(ABC):
@@ -61,6 +61,11 @@ class AbstractDot(ABC):
             game (AbstractGame): The game currently being played
             activated (list<tuple<int, int>>): A list of all neighbouring dots that were activated
             has_loop (bool): True iff the cell was activated as part of a looped selection
+             
+        Return:
+            list<tuple<int, int>>: Returns a list of positions for all dots to be activated & removed
+                                   Dots will only be activated if they haven't been activated already
+                                   Can return None
         """
         raise NotImplementedError
 
@@ -78,6 +83,7 @@ class AbstractDot(ABC):
              
         Return:
             list<tuple<int, int>>: Returns a list of positions for all dots to be removed
+                                   Dots will only be activated if they haven't been activated already
                                    Can return None
         """
         raise NotImplementedError
@@ -95,6 +101,7 @@ class AbstractDot(ABC):
              
         Return:
             list<tuple<int, int>>: Returns a list of positions for all dots to be removed
+                                   Dots will only be activated if they haven't been activated already
                                    Can return None
         """
         raise NotImplementedError()
